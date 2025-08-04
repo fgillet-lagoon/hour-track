@@ -1,207 +1,259 @@
 {% extends "base.html" %}
 
+{% block title %}Statistiques - Lagoon Time Tracker{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="text-primary mb-4">
-                <i class="bi bi-bar-chart"></i> Vue Globale des Entrées par Projets
-            </h2>
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="bi bi-graph-up text-info me-2"></i>
+                Statistiques Globales
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item active">Statistiques</li>
+                </ol>
+            </nav>
         </div>
     </div>
+</div>
 
-    <!-- Statistiques par projet -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Répartition des Heures</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="hoursChart" width="400" height="300"></canvas>
-                </div>
+<!-- Filtres de recherche globale -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-search me-2"></i>Rechercher dans toutes les entrées
+                </h5>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-orange text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Répartition par Projet (12 derniers mois)</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="monthlyChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Nouveaux graphiques -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-people"></i> Heures par Utilisateur</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="usersChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Évolution Hebdomadaire (12 semaines)</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="weeklyChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistiques par projet en tableau -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-table"></i> Statistiques par Projet</h5>
-                </div>
-                <div class="card-body">
-                    {% if project_stats %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Projet</th>
-                                    <th class="text-end">Total Heures</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for stat in project_stats %}
-                                <tr>
-                                    <td class="fw-bold">{{ stat.project_name }}</td>
-                                    <td class="text-end">
-                                        <span class="badge bg-primary">{{ "%.1f"|format(stat.total_hours) }}h</span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('view_entries') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="project" class="form-label">Projet</label>
+                        <select class="form-select" id="project" name="project">
+                            <option value="">Tous les projets</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if search_project == project.id|string %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">Aucune entrée de temps trouvée.</p>
+                    <div class="col-md-3">
+                        <label for="user" class="form-label">Utilisateur</label>
+                        <select class="form-select" id="user" name="user">
+                            <option value="">Tous les utilisateurs</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if search_user == user.id|string %}selected{% endif %}>
+                                {{ user.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste détaillée des entrées -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Toutes les Entrées</h5>
-                </div>
-                <div class="card-body">
-                    {% if all_entries %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Utilisateur</th>
-                                    <th>Projet</th>
-                                    <th class="text-end">Heures</th>
-                                    <th>Notes</th>
-                                    <th class="text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for entry, project_name, username in all_entries %}
-                                <tr>
-                                    <td>
-                                        <span class="badge bg-light text-dark">{{ entry.date.strftime('%d/%m/%Y') }}</span>
-                                    </td>
-                                    <td>
-                                        <i class="bi bi-person"></i> {{ username }}
-                                        {% if entry.user_id == current_user.id %}
-                                        <span class="badge bg-success ms-1">Vous</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="fw-bold">{{ project_name }}</td>
-                                    <td class="text-end">
-                                        <span class="badge bg-primary">{{ entry.hours }}h</span>
-                                    </td>
-                                    <td>
-                                        {% if entry.notes %}
-                                        <small class="text-muted">{{ entry.notes }}</small>
-                                        {% else %}
-                                        <small class="text-muted fst-italic">Aucune note</small>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" 
-                                               class="btn btn-outline-primary btn-sm">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
-                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
-                                                  style="display: inline;">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="col-md-4">
+                        <label for="term" class="form-label">Terme de recherche (dans les notes)</label>
+                        <input type="text" class="form-control" id="term" name="term" 
+                               value="{{ search_term }}" placeholder="Rechercher dans les notes...">
                     </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">Aucune entrée de temps trouvée.</p>
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Ajouter la première entrée
-                        </a>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-lagoon w-100">
+                            <i class="bi bi-search me-1"></i>Filtrer
+                        </button>
                     </div>
-                    {% endif %}
-                </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Chart.js pour les graphiques -->
+<!-- Graphiques des statistiques -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Répartition des Heures par Projet
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hoursChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-month me-2"></i>Répartition Mensuelle (12 derniers mois)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des entrées filtrées -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list me-2"></i>Entrées globales
+                    {% if search_project or search_term or search_user %}
+                    <span class="badge bg-info ms-2">Filtré</span>
+                    <a href="{{ url_for('view_entries') }}" class="btn btn-sm btn-outline-secondary ms-2">
+                        <i class="bi bi-x"></i> Effacer filtres
+                    </a>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if all_entries %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Utilisateur</th>
+                                <th>Projet</th>
+                                <th>Heures</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in all_entries %}
+                            <tr>
+                                <td>
+                                    <strong>{{ entry.date.strftime('%d/%m/%Y') }}</strong>
+                                    <br><small class="text-muted">{{ entry.date.strftime('%A') }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ entry.user.username }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-lagoon">{{ entry.project.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">{{ entry.hours }}h</span>
+                                </td>
+                                <td>
+                                    {% if entry.notes %}
+                                        {{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}
+                                    {% else %}
+                                        <em class="text-muted">Aucune note</em>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Résumé -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-calculator text-info me-2"></i>
+                            <strong>Total des heures affichées: 
+                                <span class="text-success">
+                                    {% set total_hours = all_entries | sum(attribute='hours') %}
+                                    {{ "%.1f"|format(total_hours) }}h
+                                </span>
+                            </strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">{{ all_entries | length }} entrée(s) trouvée(s)</small>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="text-center py-4">
+                    {% if search_project or search_term or search_user %}
+                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-2">Aucune entrée trouvée</h5>
+                    <p class="text-muted">Essayez de modifier vos critères de recherche.</p>
+                    <a href="{{ url_for('view_entries') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voir toutes les entrées
+                    </a>
+                    {% else %}
+                    <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-2">Aucune entrée de temps</h5>
+                    <p class="text-muted">Commencez par ajouter des entrées pour voir les statistiques.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques par projet en tableau -->
+<div class="row mt-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-table me-2"></i>Statistiques par Projet
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if project_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Projet</th>
+                                <th class="text-end">Total Heures</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in project_stats %}
+                            <tr>
+                                <td><strong>{{ stat.project_name }}</strong></td>
+                                <td class="text-end">{{ stat.total_hours }}h</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="text-muted mt-2">Aucune donnée disponible</h4>
+                    <p class="text-muted">Commencez par ajouter des entrées de temps pour voir les statistiques par projet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const chartData = {{ chart_data|tojson }};
+    const colors = ['#2563EB', '#EA580C', '#DC2626', '#059669', '#7C3AED', '#DB2777', '#0891B2', '#CA8A04'];
     
-    // Couleurs pour les graphiques
-    const colors = [
-        '#2563EB', '#EA580C', '#059669', '#DC2626', '#7C3AED',
-        '#DB2777', '#0891B2', '#CA8A04', '#16A34A', '#E11D48'
-    ];
+    // Graphique 1: Répartition des heures par projet (camembert)
+    const ctx = document.getElementById('hoursChart').getContext('2d');
     
-    // Graphique des heures
-    const hoursCtx = document.getElementById('hoursChart').getContext('2d');
-    new Chart(hoursCtx, {
+    {% if project_stats %}
+    const projectLabels = [{% for stat in project_stats %}'{{ stat.project_name }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+    const projectHours = [{% for stat in project_stats %}{{ stat.total_hours }}{% if not loop.last %}, {% endif %}{% endfor %}];
+    
+    new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: chartData.labels,
+            labels: projectLabels,
             datasets: [{
-                data: chartData.hours,
-                backgroundColor: colors,
+                data: projectHours,
+                backgroundColor: colors.slice(0, projectLabels.length),
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
@@ -216,58 +268,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.label + ': ' + context.parsed + 'h';
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed + 'h (' + percentage + '%)';
                         }
                     }
                 }
             }
         }
     });
+    {% else %}
+    // Pas de données
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Aucune donnée disponible", ctx.canvas.width/2, ctx.canvas.height/2);
+    {% endif %}
     
-    // Graphique mensuel par projet (en pourcentage)
+    // Graphique 2: Répartition mensuelle par projet (barres empilées)
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
     
-    // Préparer les datasets pour chaque projet
-    const datasets = [];
-    let projectIndex = 0;
+    {% if projects_monthly_data and monthly_labels %}
+    const monthlyLabels = {{ monthly_labels | safe }};
+    const projectsData = {{ projects_monthly_data | safe }};
     
-    for (const [projectName, monthlyData] of Object.entries(chartData.projects_monthly_data)) {
+    const datasets = [];
+    let colorIndex = 0;
+    for (const project in projectsData) {
         datasets.push({
-            label: projectName,
-            data: monthlyData,
-            backgroundColor: colors[projectIndex % colors.length] + '20',
-            borderColor: colors[projectIndex % colors.length],
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: colors[projectIndex % colors.length],
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4
+            label: project,
+            data: projectsData[project],
+            backgroundColor: colors[colorIndex % colors.length],
+            borderColor: colors[colorIndex % colors.length],
+            borderWidth: 1
         });
-        projectIndex++;
+        colorIndex++;
     }
     
     new Chart(monthlyCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: chartData.monthly_labels,
+            labels: monthlyLabels,
             datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
             },
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 15
-                    }
+                    position: 'bottom'
                 },
                 tooltip: {
                     callbacks: {
@@ -276,172 +339,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Pourcentage du temps'
-                    }
-                },
-                x: {
-                    ticks: {
-                        maxRotation: 45
-                    }
-                }
             }
         }
     });
-    
-    // Graphique par utilisateur (histogramme empilé)
-    const usersCtx = document.getElementById('usersChart').getContext('2d');
-    
-    // Préparer les données pour l'histogramme empilé
-    const usernames = Object.keys(chartData.users_data);
-    const allProjects = [...new Set(Object.values(chartData.users_data).flatMap(user => Object.keys(user)))];
-    
-    const usersDatasets = [];
-    
-    allProjects.forEach((projectName, index) => {
-        const projectData = usernames.map(username => {
-            const userData = chartData.users_data[username];
-            return userData[projectName] ? userData[projectName].hours : 0;
-        });
-        
-        usersDatasets.push({
-            label: projectName,
-            data: projectData,
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            borderWidth: 1
-        });
-    });
-    
-    new Chart(usersCtx, {
-        type: 'bar',
-        data: {
-            labels: usernames,
-            datasets: usersDatasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 15
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            const username = context.label;
-                            const projectName = context.dataset.label;
-                            const userData = chartData.users_data[username];
-                            const hours = context.parsed.y;
-                            const percentage = userData[projectName] ? userData[projectName].percentage : 0;
-                            return `${projectName}: ${hours}h (${percentage}%)`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    title: {
-                        display: true,
-                        text: 'Utilisateurs'
-                    }
-                },
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Heures'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + 'h';
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // Graphique évolution hebdomadaire
-    const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
-    
-    new Chart(weeklyCtx, {
-        type: 'line',
-        data: {
-            labels: chartData.weekly_labels,
-            datasets: [{
-                label: 'Heures par semaine',
-                data: chartData.weekly_hours,
-                backgroundColor: 'rgba(13, 202, 240, 0.1)',
-                borderColor: '#0DCAF0',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#0DCAF0',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.parsed.y + ' heures';
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Heures'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + 'h';
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Semaines'
-                    },
-                    ticks: {
-                        maxRotation: 45
-                    }
-                }
-            }
-        }
-    });
-});
+    {% else %}
+    // Pas de données mensuelles
+    monthlyCtx.font = "16px Arial";
+    monthlyCtx.textAlign = "center";
+    monthlyCtx.fillText("Aucune donnée mensuelle disponible", monthlyCtx.canvas.width/2, monthlyCtx.canvas.height/2);
+    {% endif %}
 </script>
 {% endblock %}

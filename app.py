@@ -153,8 +153,35 @@ def dashboard():
 @app.route('/entries')
 @login_required
 def view_entries():
-    """Vue globale des entrées par projets avec graphiques"""
+    """Vue des statistiques globales avec recherche"""
     from datetime import timedelta
+    
+    # Récupérer les paramètres de recherche
+    search_project = request.args.get('project', '')
+    search_term = request.args.get('term', '')
+    search_user = request.args.get('user', '')
+    
+    # Query de base pour toutes les entrées
+    query = TimeEntry.query
+    
+    # Filtrage par projet si spécifié
+    if search_project:
+        query = query.filter(TimeEntry.project_id == search_project)
+    
+    # Filtrage par terme de recherche dans les notes
+    if search_term:
+        query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
+    
+    # Filtrage par utilisateur si spécifié
+    if search_user:
+        query = query.filter(TimeEntry.user_id == search_user)
+    
+    # Récupérer les entrées filtrées avec détails
+    filtered_entries = query.join(Project).join(User).order_by(TimeEntry.date.desc()).all()
+    
+    # Récupérer tous les projets et utilisateurs pour les filtres
+    projects = Project.query.all()
+    users = User.query.all()
     
     # Récupérer toutes les entrées groupées par projet
     project_stats = db.session.query(
@@ -304,10 +331,17 @@ def view_entries():
         'weekly_hours': weekly_data
     }
     
-    return render_template('entries.html',
-                         project_stats=project_stats,
-                         all_entries=all_entries,
-                         chart_data=chart_data)
+    return render_template('entries.html', 
+                         project_stats=project_stats, 
+                         all_entries=filtered_entries,
+                         projects_monthly_data=projects_monthly_data,
+                         monthly_labels=monthly_labels,
+                         project_stats_data=project_stats_data,
+                         projects=projects,
+                         users=users,
+                         search_project=search_project,
+                         search_term=search_term,
+                         search_user=search_user)
 
 @app.route('/log_time', methods=['POST'])
 @login_required
@@ -695,53 +729,11 @@ def my_entries():
     # Récupérer tous les projets pour le filtre
     projects = Project.query.all()
     
-    # Graphique 1: Répartition mensuelle par projet (%)
-    monthly_data = db.session.query(
-        extract('year', TimeEntry.date).label('year'),
-        extract('month', TimeEntry.date).label('month'),
-        Project.name,
-        func.sum(TimeEntry.hours).label('total_hours')
-    ).join(Project).filter(TimeEntry.user_id == current_user.id).group_by(
-        extract('year', TimeEntry.date),
-        extract('month', TimeEntry.date),
-        Project.name
-    ).all()
-    
-    # Organiser les données par mois
-    monthly_chart_data = {}
-    for year, month, project_name, hours in monthly_data:
-        month_key = f"{int(year)}-{int(month):02d}"
-        if month_key not in monthly_chart_data:
-            monthly_chart_data[month_key] = {}
-        monthly_chart_data[month_key][project_name] = float(hours)
-    
-    # Calculer les pourcentages
-    for month_key in monthly_chart_data:
-        total_month = sum(monthly_chart_data[month_key].values())
-        if total_month > 0:
-            for project in monthly_chart_data[month_key]:
-                monthly_chart_data[month_key][project] = round(
-                    (monthly_chart_data[month_key][project] / total_month) * 100, 1
-                )
-    
-    # Graphique 2: Heures par projet
-    project_data = db.session.query(
-        Project.name,
-        func.sum(TimeEntry.hours).label('total_hours')
-    ).join(TimeEntry).filter(TimeEntry.user_id == current_user.id).group_by(Project.name).all()
-    
-    project_chart_data = {
-        'labels': [name for name, _ in project_data],
-        'data': [float(hours) for _, hours in project_data]
-    }
-    
     return render_template('my_entries.html', 
                          entries=entries, 
                          projects=projects,
                          search_project=search_project,
-                         search_term=search_term,
-                         monthly_chart_data=monthly_chart_data,
-                         project_chart_data=project_chart_data)
+                         search_term=search_term)
 
 @app.route('/my_entries/add', methods=['POST'])
 @login_required
