@@ -34,6 +34,30 @@
         </div>
     </div>
 
+    <!-- Nouveaux graphiques -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Heures par Utilisateur</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="usersChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Évolution Hebdomadaire (12 semaines)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistiques par projet en tableau -->
     <div class="row mb-4">
         <div class="col-12">
@@ -268,6 +292,149 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 },
                 x: {
+                    ticks: {
+                        maxRotation: 45
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique par utilisateur (histogramme empilé)
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    
+    // Préparer les données pour l'histogramme empilé
+    const usernames = Object.keys(chartData.users_data);
+    const allProjects = [...new Set(Object.values(chartData.users_data).flatMap(user => Object.keys(user)))];
+    
+    const usersDatasets = [];
+    
+    allProjects.forEach((projectName, index) => {
+        const projectData = usernames.map(username => {
+            const userData = chartData.users_data[username];
+            return userData[projectName] ? userData[projectName].hours : 0;
+        });
+        
+        usersDatasets.push({
+            label: projectName,
+            data: projectData,
+            backgroundColor: colors[index % colors.length],
+            borderColor: colors[index % colors.length],
+            borderWidth: 1
+        });
+    });
+    
+    new Chart(usersCtx, {
+        type: 'bar',
+        data: {
+            labels: usernames,
+            datasets: usersDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            const username = context.label;
+                            const projectName = context.dataset.label;
+                            const userData = chartData.users_data[username];
+                            const hours = context.parsed.y;
+                            const percentage = userData[projectName] ? userData[projectName].percentage : 0;
+                            return `${projectName}: ${hours}h (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: 'Utilisateurs'
+                    }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Heures'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + 'h';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique évolution hebdomadaire
+    const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+    
+    new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.weekly_labels,
+            datasets: [{
+                label: 'Heures par semaine',
+                data: chartData.weekly_hours,
+                backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                borderColor: '#0DCAF0',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#0DCAF0',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' heures';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Heures'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + 'h';
+                        }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Semaines'
+                    },
                     ticks: {
                         maxRotation: 45
                     }
