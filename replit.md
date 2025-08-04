@@ -16,6 +16,7 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **Navigation optimisée**: "Tableau de bord" avec icône speedometer, "Statistiques" avec graphiques simplifiés
 - **Interface allégée**: Suppression des graphiques complexes, moteur de recherche repositionné
 - **Recherche globale**: Filtrage par projet, utilisateur et terme de recherche dans les statistiques
+- **Système de pagination**: Limite de 10 entrées par page dans "Mes Entrées" et "Statistiques" avec contrôles de navigation Bootstrap
 
 ## User Preferences
 

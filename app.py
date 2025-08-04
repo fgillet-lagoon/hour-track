@@ -153,13 +153,15 @@ def dashboard():
 @app.route('/entries')
 @login_required
 def view_entries():
-    """Vue des statistiques globales avec recherche"""
+    """Vue des statistiques globales avec recherche et pagination"""
     from datetime import timedelta
     
-    # Récupérer les paramètres de recherche
+    # Récupérer les paramètres de recherche et pagination
     search_project = request.args.get('project', '')
     search_term = request.args.get('term', '')
     search_user = request.args.get('user', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Nombre d'entrées par page
     
     # Query de base pour toutes les entrées
     query = TimeEntry.query
@@ -176,8 +178,11 @@ def view_entries():
     if search_user:
         query = query.filter(TimeEntry.user_id == search_user)
     
-    # Récupérer les entrées filtrées avec détails
-    filtered_entries = query.join(Project).join(User).order_by(TimeEntry.date.desc()).all()
+    # Pagination des entrées filtrées avec détails
+    entries_pagination = query.join(Project).join(User).order_by(TimeEntry.date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    filtered_entries = entries_pagination.items
     
     # Récupérer tous les projets et utilisateurs pour les filtres
     projects = Project.query.all()
@@ -268,7 +273,8 @@ def view_entries():
                          users=users,
                          search_project=search_project,
                          search_term=search_term,
-                         search_user=search_user)
+                         search_user=search_user,
+                         pagination=entries_pagination)
 
 @app.route('/log_time', methods=['POST'])
 @login_required
@@ -632,12 +638,14 @@ def edit_entry(entry_id):
 @app.route('/my_entries')
 @login_required
 def my_entries():
-    """Vue personnelle des entrées avec recherche et graphiques"""
+    """Vue personnelle des entrées avec recherche et pagination"""
     from datetime import timedelta
     
-    # Récupérer les paramètres de recherche
+    # Récupérer les paramètres de recherche et pagination
     search_project = request.args.get('project', '')
     search_term = request.args.get('term', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Nombre d'entrées par page
     
     # Query de base pour les entrées de l'utilisateur
     query = TimeEntry.query.filter_by(user_id=current_user.id)
@@ -650,8 +658,11 @@ def my_entries():
     if search_term:
         query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
     
-    # Récupérer les entrées triées par date décroissante avec les détails du projet
-    entries = query.join(Project).order_by(TimeEntry.date.desc()).all()
+    # Pagination des entrées triées par date décroissante avec les détails du projet
+    entries_pagination = query.join(Project).order_by(TimeEntry.date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    entries = entries_pagination.items
     
     # Récupérer tous les projets pour le filtre
     projects = Project.query.all()
@@ -660,7 +671,8 @@ def my_entries():
                          entries=entries, 
                          projects=projects,
                          search_project=search_project,
-                         search_term=search_term)
+                         search_term=search_term,
+                         pagination=entries_pagination)
 
 @app.route('/my_entries/add', methods=['POST'])
 @login_required

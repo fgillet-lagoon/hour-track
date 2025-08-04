@@ -168,9 +168,69 @@
                         </div>
                     </div>
                     <div class="col-md-6 text-end">
-                        <small class="text-muted">{{ all_entries | length }} entrée(s) trouvée(s)</small>
+                        <small class="text-muted">{{ all_entries | length }} entrée(s) sur cette page</small>
                     </div>
                 </div>
+                
+                <!-- Pagination -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Pagination des entrées" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <!-- Page précédente -->
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('view_entries', page=pagination.prev_num, project=search_project, term=search_term, user=search_user) }}">
+                                <i class="bi bi-chevron-left"></i> Précédent
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-left"></i> Précédent</span>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Numéros de pages -->
+                        {% for page_num in pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('view_entries', page=page_num, project=search_project, term=search_term, user=search_user) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Page suivante -->
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('view_entries', page=pagination.next_num, project=search_project, term=search_term, user=search_user) }}">
+                                Suivant <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Suivant <i class="bi bi-chevron-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <!-- Informations de pagination -->
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Page {{ pagination.page }} sur {{ pagination.pages }} 
+                            ({{ pagination.total }} entrée{% if pagination.total > 1 %}s{% endif %} au total)
+                        </small>
+                    </div>
+                </nav>
+                {% endif %}
                 
                 {% else %}
                 <div class="text-center py-4">
