@@ -13,7 +13,9 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **Gestion CRUD**: Interface complète pour la gestion des utilisateurs (admin uniquement)
 - **Vue personnelle**: Nouvelle section "Mes Entrées" avec recherche par projet/terme et CRUD complet
 - **Gestion des mots de passe**: Interface pour changer son mot de passe + admin peut changer celui des autres
-- **Graphiques personnels**: 2 premiers graphiques de la vue globale adaptés à l'utilisateur individuel
+- **Navigation optimisée**: "Tableau de bord" avec icône speedometer, "Statistiques" avec graphiques simplifiés
+- **Interface allégée**: Suppression des graphiques complexes, moteur de recherche repositionné
+- **Recherche globale**: Filtrage par projet, utilisateur et terme de recherche dans les statistiques
 
 ## User Preferences
 
