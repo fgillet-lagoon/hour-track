@@ -97,34 +97,15 @@
     box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
 }
 
-/* Modales simplifiées - Pas d'animations, z-index fixe */
-.modal {
-    z-index: 1055 !important;
+/* Reset z-index pour éviter les conflits */
+.table, .card, .navbar {
+    position: relative;
+    z-index: 1;
 }
 
-.modal-backdrop {
-    z-index: 1050 !important;
-}
-
-.modal.fade {
-    transition: none !important;
-}
-
-.modal.fade.show {
-    opacity: 1 !important;
-}
-
-.modal-dialog {
-    transform: none !important;
-    margin: 1.75rem auto !important;
-}
-
-@media (max-width: 576px) {
-    .modal-dialog {
-        margin: 0.5rem !important;
-        width: calc(100% - 1rem) !important;
-        max-width: none !important;
-    }
+/* Assurer que les modales sont toujours au-dessus */
+.simple-modal {
+    z-index: 9999 !important;
 }
 
 /* Table Enhancements */

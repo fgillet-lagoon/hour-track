@@ -112,37 +112,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Global modal simplification script -->
+    <!-- Simple modal global functions -->
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Simplifier les modales Bootstrap - pas d'animations
-        const modals = document.querySelectorAll('.modal');
-        
-        modals.forEach(function(modal) {
-            // Forcer le z-index correct
-            modal.style.zIndex = '1055';
-            
-            // Supprimer la classe fade pour éliminer les animations
-            modal.classList.remove('fade');
-            
-            // S'assurer que la modale peut être fermée sur mobile
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    const modalInstance = bootstrap.Modal.getInstance(this);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                }
+    // Fonction globale pour ouvrir une modale
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            // Force au premier plan
+            modal.style.zIndex = '9999';
+        }
+    }
+    
+    // Fonction globale pour fermer une modale
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Fermer avec Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const visibleModals = document.querySelectorAll('.simple-modal[style*="block"]');
+            visibleModals.forEach(function(modal) {
+                modal.style.display = 'none';
             });
-        });
-        
-        // Fix backdrop z-index
-        document.addEventListener('show.bs.modal', function() {
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.style.zIndex = '1050';
-            }
-        });
+            document.body.style.overflow = '';
+        }
     });
     </script>
     {% block scripts %}{% endblock %}
