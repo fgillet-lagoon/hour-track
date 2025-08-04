@@ -104,13 +104,13 @@
                                     <div class="btn-group" role="group">
                                         <!-- Edit User Modal Trigger -->
                                         <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+                                                onclick="openModal('editUserModal{{ user.id }}')">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         
                                         <!-- Change Password Modal Trigger -->
                                         <button type="button" class="btn btn-sm btn-outline-warning" 
-                                                data-bs-toggle="modal" data-bs-target="#changePasswordModal{{ user.id }}">
+                                                onclick="openModal('changePasswordModal{{ user.id }}')">
                                             <i class="bi bi-key"></i>
                                         </button>
                                         
@@ -135,73 +135,71 @@
                 <!-- Modals (outside the loop to prevent blinking) -->
                 {% for user in users %}
                 <!-- Edit User Modal -->
-                <div class="modal" id="editUserModal{{ user.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Modifier l'utilisateur {{ user.username }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="edit_username{{ user.id }}" class="form-label">Nom d'utilisateur</label>
-                                        <input type="text" class="form-control" id="edit_username{{ user.id }}" 
-                                               name="username" value="{{ user.username }}" required>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" 
-                                               id="edit_is_admin{{ user.id }}" name="is_admin" 
-                                               {% if user.is_admin %}checked{% endif %}>
-                                        <label class="form-check-label" for="edit_is_admin{{ user.id }}">
-                                            Administrateur
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                        Annuler
-                                    </button>
-                                    <button type="submit" class="btn btn-lagoon">
-                                        <i class="bi bi-check-circle me-1"></i>Sauvegarder
-                                    </button>
-                                </div>
-                            </form>
+                <div class="simple-modal" id="editUserModal{{ user.id }}" style="display: none;">
+                    <div class="simple-modal-backdrop" onclick="closeModal('editUserModal{{ user.id }}')"></div>
+                    <div class="simple-modal-content">
+                        <div class="simple-modal-header">
+                            <h5>Modifier l'utilisateur {{ user.username }}</h5>
+                            <button type="button" class="btn-close" onclick="closeModal('editUserModal{{ user.id }}')"></button>
                         </div>
+                        <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                            <div class="simple-modal-body">
+                                <div class="mb-3">
+                                    <label for="edit_username{{ user.id }}" class="form-label">Nom d'utilisateur</label>
+                                    <input type="text" class="form-control" id="edit_username{{ user.id }}" 
+                                           name="username" value="{{ user.username }}" required>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="edit_is_admin{{ user.id }}" name="is_admin" 
+                                           {% if user.is_admin %}checked{% endif %}>
+                                    <label class="form-check-label" for="edit_is_admin{{ user.id }}">
+                                        Administrateur
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="simple-modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="closeModal('editUserModal{{ user.id }}')">
+                                    Annuler
+                                </button>
+                                <button type="submit" class="btn btn-lagoon">
+                                    <i class="bi bi-check-circle me-1"></i>Sauvegarder
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
                 
                 <!-- Change Password Modal -->
-                <div class="modal" id="changePasswordModal{{ user.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Changer le mot de passe de {{ user.username }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <form method="POST" action="{{ url_for('admin_change_user_password', user_id=user.id) }}">
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="new_password{{ user.id }}" class="form-label">Nouveau mot de passe</label>
-                                        <input type="password" class="form-control" id="new_password{{ user.id }}" 
-                                               name="new_password" minlength="4" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="confirm_password{{ user.id }}" class="form-label">Confirmer le mot de passe</label>
-                                        <input type="password" class="form-control" id="confirm_password{{ user.id }}" 
-                                               name="confirm_password" minlength="4" required>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                        Annuler
-                                    </button>
-                                    <button type="submit" class="btn btn-warning">
-                                        <i class="bi bi-key me-1"></i>Changer le mot de passe
-                                    </button>
-                                </div>
-                            </form>
+                <div class="simple-modal" id="changePasswordModal{{ user.id }}" style="display: none;">
+                    <div class="simple-modal-backdrop" onclick="closeModal('changePasswordModal{{ user.id }}')"></div>
+                    <div class="simple-modal-content">
+                        <div class="simple-modal-header">
+                            <h5>Changer le mot de passe de {{ user.username }}</h5>
+                            <button type="button" class="btn-close" onclick="closeModal('changePasswordModal{{ user.id }}')"></button>
                         </div>
+                        <form method="POST" action="{{ url_for('admin_change_user_password', user_id=user.id) }}">
+                            <div class="simple-modal-body">
+                                <div class="mb-3">
+                                    <label for="new_password{{ user.id }}" class="form-label">Nouveau mot de passe</label>
+                                    <input type="password" class="form-control" id="new_password{{ user.id }}" 
+                                           name="new_password" minlength="4" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm_password{{ user.id }}" class="form-label">Confirmer le mot de passe</label>
+                                    <input type="password" class="form-control" id="confirm_password{{ user.id }}" 
+                                           name="confirm_password" minlength="4" required>
+                                </div>
+                            </div>
+                            <div class="simple-modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal{{ user.id }}')">
+                                    Annuler
+                                </button>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-key me-1"></i>Changer le mot de passe
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -221,24 +219,76 @@
 
 {% block extra_css %}
 <style>
-/* Modales simplifiées pour mobile */
-.modal {
-    display: none;
+/* Modales simplifiées custom - Pas de Bootstrap Modal */
+.simple-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1055;
 }
 
-.modal.show {
-    display: block !important;
+.simple-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
-@media (max-width: 768px) {
-    .modal-dialog {
-        margin: 0.5rem;
-        width: calc(100% - 1rem);
-        max-width: none;
+.simple-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.simple-modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.simple-modal-header h5 {
+    margin: 0;
+    color: var(--bs-body-color);
+}
+
+.simple-modal-body {
+    padding: 1rem;
+}
+
+.simple-modal-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--bs-border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+@media (max-width: 576px) {
+    .simple-modal-content {
+        width: 95%;
+        margin: 1rem;
+        max-height: calc(100vh - 2rem);
     }
     
-    .modal-content {
-        border-radius: 0.5rem;
+    .simple-modal-header,
+    .simple-modal-body,
+    .simple-modal-footer {
+        padding: 0.75rem;
     }
 }
 </style>
@@ -246,6 +296,36 @@
 
 {% block scripts %}
 <script>
+// Fonctions pour les modales simplifiées
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+        // Empêcher le scroll du body
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        // Rétablir le scroll du body
+        document.body.style.overflow = '';
+    }
+}
+
+// Fermer avec la touche Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const visibleModals = document.querySelectorAll('.simple-modal[style*="block"]');
+        visibleModals.forEach(function(modal) {
+            modal.style.display = 'none';
+        });
+        document.body.style.overflow = '';
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Validation des formulaires de mot de passe
     const passwordForms = document.querySelectorAll('form[action*="change_user_password"]');
