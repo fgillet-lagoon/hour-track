@@ -25,7 +25,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-orange text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Heures par Mois (12 derniers mois)</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Répartition par Projet (12 derniers mois)</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="monthlyChart" width="400" height="300"></canvas>
@@ -49,7 +49,6 @@
                                 <tr>
                                     <th>Projet</th>
                                     <th class="text-end">Total Heures</th>
-                                    <th class="text-end">Moyenne par Entrée</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,9 +57,6 @@
                                     <td class="fw-bold">{{ stat.project_name }}</td>
                                     <td class="text-end">
                                         <span class="badge bg-primary">{{ "%.1f"|format(stat.total_hours) }}h</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <span class="badge bg-info">{{ "%.1f"|format(stat.total_hours / stat.entry_count) }}h</span>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -198,37 +194,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Graphique mensuel
+    // Graphique mensuel par projet (en pourcentage)
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    
+    // Préparer les datasets pour chaque projet
+    const datasets = [];
+    let projectIndex = 0;
+    
+    for (const [projectName, monthlyData] of Object.entries(chartData.projects_monthly_data)) {
+        datasets.push({
+            label: projectName,
+            data: monthlyData,
+            backgroundColor: colors[projectIndex % colors.length] + '20',
+            borderColor: colors[projectIndex % colors.length],
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: colors[projectIndex % colors.length],
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4
+        });
+        projectIndex++;
+    }
+    
     new Chart(monthlyCtx, {
         type: 'line',
         data: {
             labels: chartData.monthly_labels,
-            datasets: [{
-                label: 'Heures par mois',
-                data: chartData.monthly_hours,
-                backgroundColor: 'rgba(234, 88, 12, 0.1)',
-                borderColor: '#EA580C',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#EA580C',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
                 legend: {
-                    display: false
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y + ' heures';
+                            return context.dataset.label + ': ' + context.parsed.y + '%';
                         }
                     }
                 }
@@ -236,10 +250,15 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    max: 100,
                     ticks: {
                         callback: function(value) {
-                            return value + 'h';
+                            return value + '%';
                         }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Pourcentage du temps'
                     }
                 },
                 x: {

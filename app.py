@@ -169,39 +169,59 @@ def view_entries():
         User, TimeEntry.user_id == User.id
     ).order_by(TimeEntry.date.desc(), TimeEntry.created_at.desc()).all()
     
-    # Calcul des heures par mois pour les 12 derniers mois
+    # Calcul des heures par projet par mois pour les 12 derniers mois
     today = datetime.now().date()
     twelve_months_ago = today.replace(day=1) - timedelta(days=365)
     
-    monthly_stats = db.session.query(
+    monthly_project_stats = db.session.query(
         extract('year', TimeEntry.date).label('year'),
         extract('month', TimeEntry.date).label('month'),
+        Project.name.label('project_name'),
         func.sum(TimeEntry.hours).label('total_hours')
-    ).filter(
+    ).join(Project).filter(
         TimeEntry.date >= twelve_months_ago
     ).group_by(
         extract('year', TimeEntry.date),
-        extract('month', TimeEntry.date)
+        extract('month', TimeEntry.date),
+        Project.id,
+        Project.name
     ).order_by('year', 'month').all()
     
-    # Créer la liste des 12 derniers mois avec les données
-    monthly_data = []
+    # Créer la liste des 12 derniers mois
     monthly_labels = []
     current_date = twelve_months_ago
     
     for i in range(12):
-        month_year = current_date.strftime('%m/%Y')
         month_name = current_date.strftime('%b %Y')
         monthly_labels.append(month_name)
         
-        # Trouver les heures pour ce mois
-        hours_for_month = 0
-        for stat in monthly_stats:
-            if int(stat.year) == current_date.year and int(stat.month) == current_date.month:
-                hours_for_month = float(stat.total_hours)
-                break
+        # Passer au mois suivant
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=current_date.month + 1)
+    
+    # Organiser les données par projet et par mois
+    projects_monthly_data = {}
+    for stat in project_stats:
+        projects_monthly_data[stat.project_name] = [0] * 12
+    
+    current_date = twelve_months_ago
+    for month_idx in range(12):
+        month_total = 0
+        month_data = {}
         
-        monthly_data.append(hours_for_month)
+        # Calculer les heures par projet pour ce mois
+        for stat in monthly_project_stats:
+            if int(stat.year) == current_date.year and int(stat.month) == current_date.month:
+                month_data[stat.project_name] = float(stat.total_hours)
+                month_total += float(stat.total_hours)
+        
+        # Convertir en pourcentages
+        for project_name in projects_monthly_data:
+            if month_total > 0 and project_name in month_data:
+                percentage = (month_data[project_name] / month_total) * 100
+                projects_monthly_data[project_name][month_idx] = round(percentage, 1)
         
         # Passer au mois suivant
         if current_date.month == 12:
@@ -214,7 +234,7 @@ def view_entries():
         'labels': [stat.project_name for stat in project_stats],
         'hours': [float(stat.total_hours) for stat in project_stats],
         'monthly_labels': monthly_labels,
-        'monthly_hours': monthly_data
+        'projects_monthly_data': projects_monthly_data
     }
     
     return render_template('entries.html',
