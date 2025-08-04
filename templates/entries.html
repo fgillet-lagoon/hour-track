@@ -120,13 +120,19 @@
                                     </td>
                                     <td class="text-center">
                                         {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                        <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
-                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
-                                              style="display: inline;">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
+                                                  style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}

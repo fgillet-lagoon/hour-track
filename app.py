@@ -530,6 +530,77 @@ def delete_entry(entry_id):
     else:
         return redirect(url_for('dashboard'))
 
+@app.route('/edit_entry/<int:entry_id>', methods=['GET', 'POST'])
+@login_required
+def edit_entry(entry_id):
+    """Modifier une entrée de temps"""
+    try:
+        entry = TimeEntry.query.get(entry_id)
+        if not entry:
+            flash('Entrée introuvable.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Vérifier les permissions
+        if not current_user.is_admin and entry.user_id != current_user.id:
+            flash('Vous ne pouvez modifier que vos propres entrées.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        if request.method == 'POST':
+            # Traitement de la modification
+            project_id_str = request.form.get('project_id')
+            if not project_id_str:
+                flash('Veuillez sélectionner un projet.', 'error')
+                return redirect(url_for('edit_entry', entry_id=entry_id))
+            
+            project_id = int(project_id_str)
+            hours = float(request.form.get('hours', 0))
+            date_str = request.form.get('date')
+            notes = request.form.get('notes', '')
+            
+            # Validation
+            if not project_id or hours <= 0 or not date_str:
+                flash('Veuillez fournir un projet, des heures et une date valides.', 'error')
+                return redirect(url_for('edit_entry', entry_id=entry_id))
+            
+            # Vérifier que le projet existe
+            project = Project.query.get(project_id)
+            if not project:
+                flash('Projet sélectionné invalide.', 'error')
+                return redirect(url_for('edit_entry', entry_id=entry_id))
+            
+            # Parser la date
+            try:
+                entry_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Format de date invalide.', 'error')
+                return redirect(url_for('edit_entry', entry_id=entry_id))
+            
+            # Mettre à jour l'entrée
+            entry.project_id = project_id
+            entry.hours = hours
+            entry.date = entry_date
+            entry.notes = notes
+            
+            db.session.commit()
+            flash(f'Entrée modifiée avec succès : {hours}h sur {project.name}', 'success')
+            
+            # Rediriger vers la page d'origine
+            referer = request.headers.get('Referer')
+            if referer and '/entries' in referer:
+                return redirect(url_for('view_entries'))
+            else:
+                return redirect(url_for('dashboard'))
+        
+        # GET - Afficher le formulaire d'édition
+        projects = Project.query.all()
+        return render_template('edit_entry.html', entry=entry, projects=projects)
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la modification de l'entrée: {str(e)}")
+        flash('Erreur lors de la modification. Veuillez réessayer.', 'error')
+        db.session.rollback()
+        return redirect(url_for('dashboard'))
+
 @app.errorhandler(404)
 def not_found(error):
     """Gérer les erreurs 404"""
