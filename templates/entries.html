@@ -20,6 +20,38 @@
     </div>
 </div>
 
+<!-- Graphiques des statistiques -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Répartition des Heures par Projet
+                </h5>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="hoursChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-month me-2"></i>Répartition Mensuelle (12 derniers mois)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filtres de recherche globale -->
 <div class="row mb-4">
     <div class="col-12">
@@ -64,38 +96,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Graphiques des statistiques -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-pie-chart me-2"></i>Répartition des Heures par Projet
-                </h5>
-            </div>
-            <div class="card-body">
-                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
-                    <canvas id="hoursChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-calendar-month me-2"></i>Répartition Mensuelle (12 derniers mois)
-                </h5>
-            </div>
-            <div class="card-body">
-                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
-                    <canvas id="monthlyChart"></canvas>
-                </div>
             </div>
         </div>
     </div>
