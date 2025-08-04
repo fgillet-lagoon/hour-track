@@ -11,6 +11,9 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **Utilisateurs par défaut**: Création automatique de fgillet (admin) et htepa (utilisateur standard)
 - **Interface française**: Toutes les interfaces traduites en français avec branding Lagoon
 - **Gestion CRUD**: Interface complète pour la gestion des utilisateurs (admin uniquement)
+- **Vue personnelle**: Nouvelle section "Mes Entrées" avec recherche par projet/terme et CRUD complet
+- **Gestion des mots de passe**: Interface pour changer son mot de passe + admin peut changer celui des autres
+- **Graphiques personnels**: 2 premiers graphiques de la vue globale adaptés à l'utilisateur individuel
 
 ## User Preferences
 
@@ -56,6 +59,10 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **Core Application**: `app.py` containing all routes and business logic
 - **Data Models**: `models.py` with SQLAlchemy model definitions
 - **Templates**: French language templates with Lagoon branding
+  - `my_entries.html`: Vue personnelle avec recherche et graphiques
+  - `edit_my_entry.html`: Formulaire d'édition d'entrée personnelle
+  - `change_password.html`: Interface de changement de mot de passe
+  - `users.html`: Gestion des utilisateurs avec modals séparées
 - **Static Assets**: Custom CSS with Lagoon color scheme and logo
 
 ## External Dependencies

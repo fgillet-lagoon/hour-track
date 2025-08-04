@@ -668,6 +668,231 @@ def edit_entry(entry_id):
         db.session.rollback()
         return redirect(url_for('dashboard'))
 
+@app.route('/my_entries')
+@login_required
+def my_entries():
+    """Vue personnelle des entrées avec recherche et graphiques"""
+    from sqlalchemy import func, extract
+    from datetime import datetime, timedelta
+    
+    # Récupérer les paramètres de recherche
+    search_project = request.args.get('project', '')
+    search_term = request.args.get('term', '')
+    
+    # Query de base pour les entrées de l'utilisateur
+    query = TimeEntry.query.filter_by(user_id=current_user.id)
+    
+    # Filtrage par projet si spécifié
+    if search_project:
+        query = query.filter(TimeEntry.project_id == search_project)
+    
+    # Filtrage par terme de recherche dans les notes
+    if search_term:
+        query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
+    
+    # Récupérer les entrées triées par date décroissante avec les détails du projet
+    entries = query.join(Project).order_by(TimeEntry.date.desc()).all()
+    
+    # Récupérer tous les projets pour le filtre
+    projects = Project.query.all()
+    
+    # Graphique 1: Répartition mensuelle par projet (%)
+    monthly_data = db.session.query(
+        extract('year', TimeEntry.date).label('year'),
+        extract('month', TimeEntry.date).label('month'),
+        Project.name,
+        func.sum(TimeEntry.hours).label('total_hours')
+    ).join(Project).filter(TimeEntry.user_id == current_user.id).group_by(
+        extract('year', TimeEntry.date),
+        extract('month', TimeEntry.date),
+        Project.name
+    ).all()
+    
+    # Organiser les données par mois
+    monthly_chart_data = {}
+    for year, month, project_name, hours in monthly_data:
+        month_key = f"{int(year)}-{int(month):02d}"
+        if month_key not in monthly_chart_data:
+            monthly_chart_data[month_key] = {}
+        monthly_chart_data[month_key][project_name] = float(hours)
+    
+    # Calculer les pourcentages
+    for month_key in monthly_chart_data:
+        total_month = sum(monthly_chart_data[month_key].values())
+        if total_month > 0:
+            for project in monthly_chart_data[month_key]:
+                monthly_chart_data[month_key][project] = round(
+                    (monthly_chart_data[month_key][project] / total_month) * 100, 1
+                )
+    
+    # Graphique 2: Heures par projet
+    project_data = db.session.query(
+        Project.name,
+        func.sum(TimeEntry.hours).label('total_hours')
+    ).join(TimeEntry).filter(TimeEntry.user_id == current_user.id).group_by(Project.name).all()
+    
+    project_chart_data = {
+        'labels': [name for name, _ in project_data],
+        'data': [float(hours) for _, hours in project_data]
+    }
+    
+    return render_template('my_entries.html', 
+                         entries=entries, 
+                         projects=projects,
+                         search_project=search_project,
+                         search_term=search_term,
+                         monthly_chart_data=monthly_chart_data,
+                         project_chart_data=project_chart_data)
+
+@app.route('/my_entries/add', methods=['POST'])
+@login_required
+def add_my_entry():
+    """Ajouter une nouvelle entrée depuis la vue personnelle"""
+    try:
+        project_id = request.form.get('project_id')
+        hours = request.form.get('hours')
+        date_str = request.form.get('date')
+        notes = request.form.get('notes', '').strip()
+        
+        # Validation
+        if not project_id or not hours or not date_str:
+            flash('Tous les champs obligatoires doivent être remplis.', 'error')
+            return redirect(url_for('my_entries'))
+        
+        # Validation du projet
+        project = Project.query.get(project_id)
+        if not project:
+            flash('Projet invalide.', 'error')
+            return redirect(url_for('my_entries'))
+        
+        # Validation des heures
+        try:
+            hours_float = float(hours)
+            if hours_float <= 0:
+                flash('Le nombre d\'heures doit être positif.', 'error')
+                return redirect(url_for('my_entries'))
+        except ValueError:
+            flash('Nombre d\'heures invalide.', 'error')
+            return redirect(url_for('my_entries'))
+        
+        # Validation de la date
+        try:
+            entry_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Format de date invalide.', 'error')
+            return redirect(url_for('my_entries'))
+        
+        # Créer l'entrée
+        entry = TimeEntry()
+        entry.user_id = current_user.id
+        entry.project_id = project_id
+        entry.hours = hours_float
+        entry.date = entry_date
+        entry.notes = notes
+        
+        db.session.add(entry)
+        db.session.commit()
+        flash(f'Entrée ajoutée avec succès: {hours_float}h sur {project.name}', 'success')
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'ajout de l'entrée: {str(e)}")
+        flash('Erreur lors de l\'ajout. Veuillez réessayer.', 'error')
+        db.session.rollback()
+    
+    return redirect(url_for('my_entries'))
+
+@app.route('/my_entries/edit/<int:entry_id>', methods=['GET', 'POST'])
+@login_required 
+def edit_my_entry(entry_id):
+    """Éditer une entrée depuis la vue personnelle"""
+    entry = TimeEntry.query.get_or_404(entry_id)
+    
+    # Vérifier que l'utilisateur peut modifier cette entrée
+    if entry.user_id != current_user.id and not current_user.is_admin:
+        flash('Vous ne pouvez modifier que vos propres entrées.', 'error')
+        return redirect(url_for('my_entries'))
+    
+    if request.method == 'POST':
+        try:
+            project_id = request.form.get('project_id')
+            hours = request.form.get('hours')
+            date_str = request.form.get('date')
+            notes = request.form.get('notes', '').strip()
+            
+            # Validation
+            if not project_id or not hours or not date_str:
+                flash('Tous les champs obligatoires doivent être remplis.', 'error')
+                return redirect(url_for('edit_my_entry', entry_id=entry_id))
+            
+            # Validation du projet
+            project = Project.query.get(project_id)
+            if not project:
+                flash('Projet invalide.', 'error')
+                return redirect(url_for('edit_my_entry', entry_id=entry_id))
+            
+            # Validation des heures
+            try:
+                hours_float = float(hours)
+                if hours_float <= 0:
+                    flash('Le nombre d\'heures doit être positif.', 'error')
+                    return redirect(url_for('edit_my_entry', entry_id=entry_id))
+            except ValueError:
+                flash('Nombre d\'heures invalide.', 'error')
+                return redirect(url_for('edit_my_entry', entry_id=entry_id))
+            
+            # Validation de la date
+            try:
+                entry_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Format de date invalide.', 'error')
+                return redirect(url_for('edit_my_entry', entry_id=entry_id))
+            
+            # Mettre à jour l'entrée
+            entry.project_id = project_id
+            entry.hours = hours_float
+            entry.date = entry_date
+            entry.notes = notes
+            
+            db.session.commit()
+            flash('Entrée modifiée avec succès !', 'success')
+            return redirect(url_for('my_entries'))
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la modification de l'entrée: {str(e)}")
+            flash('Erreur lors de la modification. Veuillez réessayer.', 'error')
+            db.session.rollback()
+            return redirect(url_for('edit_my_entry', entry_id=entry_id))
+    
+    # GET request - afficher le formulaire d'édition
+    projects = Project.query.all()
+    return render_template('edit_my_entry.html', entry=entry, projects=projects)
+
+@app.route('/my_entries/delete/<int:entry_id>', methods=['POST'])
+@login_required
+def delete_my_entry(entry_id):
+    """Supprimer une entrée depuis la vue personnelle"""
+    try:
+        entry = TimeEntry.query.get_or_404(entry_id)
+        
+        # Vérifier que l'utilisateur peut supprimer cette entrée
+        if entry.user_id != current_user.id and not current_user.is_admin:
+            flash('Vous ne pouvez supprimer que vos propres entrées.', 'error')
+            return redirect(url_for('my_entries'))
+        
+        project_name = entry.project.name
+        hours = entry.hours
+        
+        db.session.delete(entry)
+        db.session.commit()
+        flash(f'Entrée supprimée: {hours}h sur {project_name}', 'success')
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la suppression de l'entrée: {str(e)}")
+        flash('Erreur lors de la suppression. Veuillez réessayer.', 'error')
+        db.session.rollback()
+    
+    return redirect(url_for('my_entries'))
+
 @app.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
