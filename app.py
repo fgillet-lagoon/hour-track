@@ -43,27 +43,30 @@ def init_database():
         # Check if users already exist
         if User.query.count() == 0:
             # Create default users
-            admin_user = User(username='fgillet', is_admin=True)
+            admin_user = User()
+            admin_user.username = 'fgillet'
+            admin_user.is_admin = True
             admin_user.set_password('fgillet')
             
-            regular_user = User(username='htepa', is_admin=False)
+            regular_user = User()
+            regular_user.username = 'htepa'
+            regular_user.is_admin = False
             regular_user.set_password('htepa')
             
             db.session.add(admin_user)
             db.session.add(regular_user)
+            db.session.flush()  # Flush to get the IDs
             
             # Create default projects
-            project1 = Project(
-                name='Développement Site Web',
-                description='Développement frontend et backend du site web de l\'entreprise',
-                creator=admin_user
-            )
+            project1 = Project()
+            project1.name = 'Développement Site Web'
+            project1.description = 'Développement frontend et backend du site web de l\'entreprise'
+            project1.created_by_id = admin_user.id
             
-            project2 = Project(
-                name='Application Mobile',
-                description='Développement de l\'application mobile iOS et Android',
-                creator=admin_user
-            )
+            project2 = Project()
+            project2.name = 'Application Mobile'
+            project2.description = 'Développement de l\'application mobile iOS et Android'
+            project2.created_by_id = admin_user.id
             
             db.session.add(project1)
             db.session.add(project2)
@@ -150,7 +153,11 @@ def dashboard():
 def log_time():
     """Enregistrer du temps pour un projet"""
     try:
-        project_id = int(request.form.get('project_id'))
+        project_id_str = request.form.get('project_id')
+        if not project_id_str:
+            flash('Veuillez sélectionner un projet.', 'error')
+            return redirect(url_for('dashboard'))
+        project_id = int(project_id_str)
         hours = float(request.form.get('hours', 0))
         date_str = request.form.get('date')
         notes = request.form.get('notes', '')
@@ -174,13 +181,12 @@ def log_time():
             return redirect(url_for('dashboard'))
         
         # Create time entry
-        time_entry = TimeEntry(
-            user_id=current_user.id,
-            project_id=project_id,
-            hours=hours,
-            date=entry_date,
-            notes=notes
-        )
+        time_entry = TimeEntry()
+        time_entry.user_id = current_user.id
+        time_entry.project_id = project_id
+        time_entry.hours = hours
+        time_entry.date = entry_date
+        time_entry.notes = notes
         
         db.session.add(time_entry)
         db.session.commit()
@@ -228,11 +234,10 @@ def add_project():
             flash('Le nom du projet est requis.', 'error')
             return redirect(url_for('admin'))
         
-        project = Project(
-            name=name,
-            description=description,
-            creator=current_user
-        )
+        project = Project()
+        project.name = name
+        project.description = description
+        project.created_by_id = current_user.id
         
         db.session.add(project)
         db.session.commit()
@@ -303,7 +308,9 @@ def add_user():
             flash('Ce nom d\'utilisateur existe déjà.', 'error')
             return redirect(url_for('manage_users'))
         
-        user = User(username=username, is_admin=is_admin)
+        user = User()
+        user.username = username
+        user.is_admin = is_admin
         user.set_password(password)
         
         db.session.add(user)
