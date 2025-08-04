@@ -135,7 +135,7 @@
                 <!-- Modals (outside the loop to prevent blinking) -->
                 {% for user in users %}
                 <!-- Edit User Modal -->
-                <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal" id="editUserModal{{ user.id }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -172,7 +172,7 @@
                 </div>
                 
                 <!-- Change Password Modal -->
-                <div class="modal fade" id="changePasswordModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal" id="changePasswordModal{{ user.id }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -221,46 +221,25 @@
 
 {% block extra_css %}
 <style>
-/* Empêcher le clignotement des modales */
+/* Modales simplifiées pour mobile */
 .modal {
-    -webkit-transform: translateZ(0);
-    -moz-transform: translateZ(0);
-    -ms-transform: translateZ(0);
-    -o-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000;
-    perspective: 1000;
+    display: none;
 }
 
-.modal.fade {
-    -webkit-transition: opacity 0.15s linear;
-    -o-transition: opacity 0.15s linear;
-    transition: opacity 0.15s linear;
+.modal.show {
+    display: block !important;
 }
 
-.modal.fade.show {
-    opacity: 1;
-}
-
-.modal-backdrop {
-    -webkit-transition: opacity 0.15s linear;
-    -o-transition: opacity 0.15s linear;
-    transition: opacity 0.15s linear;
-}
-
-/* Empêcher le reflow/repaint pendant l'ouverture */
-.modal-dialog {
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-}
-
-/* Optimisation pour les performances */
-.modal-content {
-    will-change: transform;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        width: calc(100% - 1rem);
+        max-width: none;
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
+    }
 }
 </style>
 {% endblock %}
@@ -268,23 +247,6 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Optimiser les modales Bootstrap pour éviter le clignotement
-    const modals = document.querySelectorAll('.modal');
-    
-    modals.forEach(function(modal) {
-        // Pré-charger la modale pour éviter le flicker
-        modal.addEventListener('show.bs.modal', function (e) {
-            // Forcer le repaint avant l'animation
-            this.style.display = 'block';
-            this.offsetHeight; // Force reflow
-        });
-        
-        // Nettoyer après fermeture
-        modal.addEventListener('hidden.bs.modal', function (e) {
-            this.style.display = '';
-        });
-    });
-    
     // Validation des formulaires de mot de passe
     const passwordForms = document.querySelectorAll('form[action*="change_user_password"]');
     passwordForms.forEach(function(form) {

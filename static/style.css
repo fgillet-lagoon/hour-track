@@ -97,42 +97,34 @@
     box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
 }
 
-/* Optimisations globales pour les modales - Empêcher le clignotement */
+/* Modales simplifiées - Pas d'animations, z-index fixe */
 .modal {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
-}
-
-.modal.fade {
-    -webkit-transition: opacity 0.15s linear;
-    transition: opacity 0.15s linear;
-}
-
-.modal-dialog {
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
-}
-
-.modal-content {
-    will-change: transform;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    z-index: 1055 !important;
 }
 
 .modal-backdrop {
-    -webkit-transition: opacity 0.15s linear;
-    transition: opacity 0.15s linear;
+    z-index: 1050 !important;
 }
 
-/* Empêcher les animations CSS qui peuvent causer des clignotements */
-.modal * {
-    -webkit-animation-duration: 0.15s;
-    animation-duration: 0.15s;
+.modal.fade {
+    transition: none !important;
+}
+
+.modal.fade.show {
+    opacity: 1 !important;
+}
+
+.modal-dialog {
+    transform: none !important;
+    margin: 1.75rem auto !important;
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.5rem !important;
+        width: calc(100% - 1rem) !important;
+        max-width: none !important;
+    }
 }
 
 /* Table Enhancements */
