@@ -257,86 +257,13 @@ def view_entries():
         else:
             current_date = current_date.replace(month=current_date.month + 1)
     
-    # Statistiques par utilisateur pour le graphique histogramme
-    user_project_stats = db.session.query(
-        User.username,
-        Project.name.label('project_name'),
-        func.sum(TimeEntry.hours).label('total_hours')
-    ).select_from(TimeEntry).join(
-        User, TimeEntry.user_id == User.id
-    ).join(
-        Project, TimeEntry.project_id == Project.id
-    ).group_by(
-        User.id, User.username, Project.id, Project.name
-    ).order_by(User.username, Project.name).all()
-    
-    # Organiser les données par utilisateur
-    users_data = {}
-    for stat in user_project_stats:
-        if stat.username not in users_data:
-            users_data[stat.username] = {'total': 0, 'projects': {}}
-        users_data[stat.username]['projects'][stat.project_name] = float(stat.total_hours)
-        users_data[stat.username]['total'] += float(stat.total_hours)
-    
-    # Calculer les pourcentages par projet pour chaque utilisateur
-    users_chart_data = {}
-    for username, data in users_data.items():
-        users_chart_data[username] = {}
-        for project_name, hours in data['projects'].items():
-            percentage = (hours / data['total']) * 100 if data['total'] > 0 else 0
-            users_chart_data[username][project_name] = {
-                'hours': hours,
-                'percentage': round(percentage, 1)
-            }
-    
-    # Statistiques hebdomadaires pour les 12 dernières semaines
-    weekly_stats = db.session.query(
-        extract('week', TimeEntry.date).label('week'),
-        extract('year', TimeEntry.date).label('year'),
-        func.sum(TimeEntry.hours).label('total_hours')
-    ).filter(
-        TimeEntry.date >= twelve_months_ago
-    ).group_by(
-        extract('year', TimeEntry.date),
-        extract('week', TimeEntry.date)
-    ).order_by('year', 'week').all()
-    
-    # Organiser les données hebdomadaires
-    weekly_data = []
-    weekly_labels = []
-    for i in range(12):
-        week_date = today - timedelta(weeks=i)
-        week_num = week_date.isocalendar()[1]
-        year = week_date.year
-        week_label = f"S{week_num} {year}"
-        weekly_labels.insert(0, week_label)
-        
-        # Trouver les heures pour cette semaine
-        hours_for_week = 0
-        for stat in weekly_stats:
-            if int(stat.year) == year and int(stat.week) == week_num:
-                hours_for_week = float(stat.total_hours)
-                break
-        
-        weekly_data.insert(0, hours_for_week)
-    
-    # Préparer les données pour les graphiques
-    chart_data = {
-        'labels': [stat.project_name for stat in project_stats],
-        'hours': [float(stat.total_hours) for stat in project_stats],
-        'monthly_labels': monthly_labels,
-        'projects_monthly_data': projects_monthly_data,
-        'users_data': users_chart_data,
-        'weekly_labels': weekly_labels,
-        'weekly_hours': weekly_data
-    }
+
     
     return render_template('entries.html', 
                          project_stats=project_stats, 
                          all_entries=filtered_entries,
                          projects_monthly_data=projects_monthly_data,
                          monthly_labels=monthly_labels,
-                         project_stats_data=project_stats_data,
                          projects=projects,
                          users=users,
                          search_project=search_project,
