@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Time Tracker{% endblock %}
+
+{% block content %}
+<!-- User Welcome -->
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3">Welcome, {{ session.user_firstname or session.user_name }}!</h1>
+        <p class="text-muted">Track your project hours and manage your time efficiently.</p>
+    </div>
+    {% if is_admin %}
+    <div class="col-auto">
+        <a href="{{ url_for('admin') }}" class="btn btn-outline-primary">
+            <i class="bi bi-gear me-2"></i>Admin Panel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Projects Overview -->
+<div class="row mb-4">
+    {% for project in projects %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ project.name }}</h5>
+                <p class="card-text text-muted">{{ project.description or 'No description available' }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-primary">
+                        {{ project_hours.get(project.id, 0) }} hours logged
+                    </span>
+                </div>
+                
+                <!-- Quick Time Entry Form -->
+                <form method="POST" action="{{ url_for('log_time') }}">
+                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="number" name="hours" class="form-control form-control-sm" 
+                                   placeholder="Hours" min="0.1" step="0.1" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="date" name="date" class="form-control form-control-sm" 
+                                   value="{{ moment().format('YYYY-MM-DD') if moment else '' }}" required>
+                        </div>
+                        <div class="col-12">
+                            <input type="text" name="notes" class="form-control form-control-sm" 
+                                   placeholder="Notes (optional)">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                <i class="bi bi-plus-circle me-1"></i>Log Time
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if not projects %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="bi bi-folder-x display-1 text-muted"></i>
+            <h3 class="mt-3">No Projects Available</h3>
+            <p class="text-muted">Contact your administrator to add projects.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Time Entries -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Recent Time Entries
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if user_time_entries %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Project</th>
+                                <th>Hours</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in user_time_entries[-10:] %}
+                            <tr>
+                                <td>{{ entry.date }}</td>
+                                <td>
+                                    {% for project in projects %}
+                                        {% if project.id == entry.project_id %}
+                                            {{ project.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ entry.hours }}h</span>
+                                </td>
+                                <td>{{ entry.notes or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-clock display-4 text-muted"></i>
+                    <h5 class="mt-3">No Time Entries Yet</h5>
+                    <p class="text-muted">Start logging your project hours using the forms above.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set current date as default for all date inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        if (!input.value) {
+            input.value = today;
+        }
+    });
+});
+</script>
+{% endblock %}

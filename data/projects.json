@@ -1,0 +1,16 @@
+[
+  {
+    "id": "project-001",
+    "name": "Website Development",
+    "description": "Frontend and backend development for company website",
+    "created_at": "2025-08-04T00:00:00.000000",
+    "created_by": "system"
+  },
+  {
+    "id": "project-002", 
+    "name": "Mobile App",
+    "description": "iOS and Android mobile application development",
+    "created_at": "2025-08-04T00:00:00.000000",
+    "created_by": "system"
+  }
+]

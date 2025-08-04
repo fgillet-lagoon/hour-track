@@ -1,0 +1,37 @@
+{
+  "sp": {
+    "entityId": "http://localhost:5000",
+    "assertionConsumerService": {
+      "url": "http://localhost:5000/saml/sso",
+      "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+    },
+    "nameIdFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+    "x509cert": "",
+    "privateKey": ""
+  },
+  "idp": {
+    "entityId": "https://sts.windows.net/YOUR-TENANT-ID/",
+    "singleSignOnService": {
+      "url": "https://login.microsoftonline.com/YOUR-TENANT-ID/saml2",
+      "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+    },
+    "singleLogoutService": {
+      "url": "https://login.microsoftonline.com/YOUR-TENANT-ID/saml2",
+      "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+    },
+    "x509cert": "YOUR-AZURE-AD-CERTIFICATE"
+  },
+  "security": {
+    "nameIdEncrypted": false,
+    "authnRequestsSigned": false,
+    "logoutRequestSigned": false,
+    "logoutResponseSigned": false,
+    "signMetadata": false,
+    "wantAssertionsSigned": false,
+    "wantNameId": true,
+    "wantNameIdEncrypted": false,
+    "wantAssertionsEncrypted": false,
+    "signatureAlgorithm": "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+    "digestAlgorithm": "http://www.w3.org/2000/09/xmldsig#sha1"
+  }
+}
