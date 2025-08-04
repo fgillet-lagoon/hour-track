@@ -1,12 +1,14 @@
-# Time Tracker Application
+# Application de Suivi du Temps Lagoon
 
 ## Overview
 
-A Flask-based time tracking application with Microsoft SAML SSO integration. The application allows users to log hours against projects and provides administrative capabilities for project management. It features a role-based access system with admin users having additional privileges to manage projects and view all time entries.
+Une application Flask de suivi du temps avec intégration SSO SAML Microsoft. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires pour gérer les projets et voir toutes les entrées de temps.
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language.
+- Language: French (all UI text and messages)
+- Branding: Lagoon logo and color scheme (blue #2563EB and orange #EA580C)
 
 ## System Architecture
 

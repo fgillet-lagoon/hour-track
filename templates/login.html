@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Time Tracker{% endblock %}
+{% block title %}Connexion - Suivi du Temps Lagoon{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,10 +8,10 @@
         <div class="card">
             <div class="card-body text-center p-5">
                 <div class="mb-4">
-                    <i class="bi bi-clock-history display-1 text-primary"></i>
+                    <img src="{{ url_for('static', filename='lagoon_logo.png') }}" alt="Lagoon" style="height: 60px;">
                 </div>
                 
-                <h2 class="card-title mb-4">Time Tracker</h2>
+                <h2 class="card-title mb-4 lagoon-brand">Suivi du Temps</h2>
                 
                 {% if error %}
                     <div class="alert alert-danger">
@@ -20,20 +20,20 @@
                 {% endif %}
                 
                 <p class="text-muted mb-4">
-                    Please sign in with your Microsoft account to continue.
+                    Veuillez vous connecter avec votre compte Microsoft pour continuer.
                 </p>
                 
                 <div class="d-grid gap-2">
-                    <a href="{{ saml_login_url or '#' }}" class="btn btn-primary btn-lg">
+                    <a href="{{ saml_login_url or '#' }}" class="btn btn-lagoon btn-lg">
                         <i class="bi bi-microsoft me-2"></i>
-                        Sign in with Microsoft
+                        Se connecter avec Microsoft
                     </a>
                 </div>
                 
                 <div class="mt-4">
                     <small class="text-muted">
                         <i class="bi bi-shield-check me-1"></i>
-                        Secure SSO Authentication
+                        Authentification SSO Sécurisée
                     </small>
                 </div>
             </div>
@@ -43,10 +43,10 @@
         <div class="card mt-3">
             <div class="card-body">
                 <h6 class="card-title">
-                    <i class="bi bi-info-circle me-2"></i>Development Mode
+                    <i class="bi bi-info-circle me-2"></i>Mode Développement
                 </h6>
                 <p class="card-text small text-muted mb-0">
-                    SAML SSO is configured for Microsoft Azure AD. Ensure your tenant ID and certificates are properly configured in the environment variables.
+                    Le SSO SAML est configuré pour Microsoft Azure AD. Assurez-vous que votre ID de locataire et vos certificats sont correctement configurés dans les variables d'environnement.
                 </p>
             </div>
         </div>

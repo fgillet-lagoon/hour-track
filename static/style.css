@@ -1,4 +1,26 @@
-/* Custom styles for Time Tracker application */
+/* Custom styles for Lagoon Time Tracker application */
+
+/* Lagoon Brand Colors */
+:root {
+    --lagoon-blue: #2563EB;
+    --lagoon-orange: #EA580C;
+    --lagoon-blue-light: #3B82F6;
+    --lagoon-orange-light: #F97316;
+    --lagoon-blue-dark: #1D4ED8;
+    --lagoon-orange-dark: #DC2626;
+}
+
+/* Override Bootstrap primary and secondary colors */
+:root {
+    --bs-primary: var(--lagoon-blue);
+    --bs-primary-rgb: 37, 99, 235;
+    --bs-secondary: var(--lagoon-orange);
+    --bs-secondary-rgb: 234, 88, 12;
+    --bs-success: #22C55E;
+    --bs-info: var(--lagoon-blue-light);
+    --bs-warning: var(--lagoon-orange-light);
+    --bs-danger: #EF4444;
+}
 
 /* Ensure proper spacing and layout */
 .card {
@@ -47,6 +69,36 @@
 .navbar-brand {
     font-weight: 600;
     font-size: 1.25rem;
+}
+
+.navbar-brand img {
+    height: 32px;
+    margin-right: 8px;
+}
+
+/* Lagoon specific brand styling */
+.lagoon-brand {
+    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.btn-lagoon {
+    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
+    border: none;
+    color: white;
+}
+
+.btn-lagoon:hover {
+    background: linear-gradient(135deg, var(--lagoon-blue-dark) 0%, var(--lagoon-orange-dark) 100%);
+    color: white;
+}
+
+.badge-lagoon {
+    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
+    color: white;
 }
 
 /* Alert improvements */

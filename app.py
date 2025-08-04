@@ -18,7 +18,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key_change_in_prod
 saml_auth = SAMLAuth()
 data_manager = DataManager()
 
-# Hardcoded admin users (email addresses)
+# Utilisateurs administrateurs (adresses email)
 ADMIN_USERS = [
     'admin@company.com',
     'manager@company.com'
@@ -66,23 +66,23 @@ def saml_callback():
             # Store user data
             data_manager.save_user(user_data)
             
-            logger.info(f"User authenticated: {session['user_email']}")
-            flash('Successfully logged in!', 'success')
+            logger.info(f"Utilisateur authentifié: {session['user_email']}")
+            flash('Connexion réussie !', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Authentication failed. Please try again.', 'error')
+            flash('Échec de l\'authentification. Veuillez réessayer.', 'error')
             return redirect(url_for('login'))
             
     except Exception as e:
         logger.error(f"SAML authentication error: {str(e)}")
-        flash('Authentication error occurred. Please try again.', 'error')
+        flash('Erreur d\'authentification. Veuillez réessayer.', 'error')
         return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
     """Logout user"""
     session.clear()
-    flash('You have been logged out.', 'info')
+    flash('Vous avez été déconnecté.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
@@ -124,13 +124,13 @@ def log_time():
         
         # Validate input
         if not project_id or hours <= 0 or not date:
-            flash('Please provide valid project, hours, and date.', 'error')
+            flash('Veuillez fournir un projet, des heures et une date valides.', 'error')
             return redirect(url_for('dashboard'))
         
         # Check if project exists
         projects = data_manager.get_projects()
         if not any(p['id'] == project_id for p in projects):
-            flash('Invalid project selected.', 'error')
+            flash('Projet sélectionné invalide.', 'error')
             return redirect(url_for('dashboard'))
         
         # Create time entry
@@ -145,13 +145,13 @@ def log_time():
         }
         
         data_manager.add_time_entry(time_entry)
-        flash(f'Successfully logged {hours} hours!', 'success')
+        flash(f'{hours} heures enregistrées avec succès !', 'success')
         
     except ValueError:
-        flash('Please enter a valid number of hours.', 'error')
+        flash('Veuillez entrer un nombre d\'heures valide.', 'error')
     except Exception as e:
         logger.error(f"Error logging time: {str(e)}")
-        flash('Error logging time. Please try again.', 'error')
+        flash('Erreur lors de l\'enregistrement du temps. Veuillez réessayer.', 'error')
     
     return redirect(url_for('dashboard'))
 
@@ -162,7 +162,7 @@ def admin():
         return redirect(url_for('login'))
     
     if not is_admin():
-        flash('Access denied. Admin privileges required.', 'error')
+        flash('Accès refusé. Privilèges d\'administrateur requis.', 'error')
         return redirect(url_for('dashboard'))
     
     projects = data_manager.get_projects()
@@ -174,7 +174,7 @@ def admin():
 def add_project():
     """Add new project (admin only)"""
     if not is_authenticated() or not is_admin():
-        flash('Access denied.', 'error')
+        flash('Accès refusé.', 'error')
         return redirect(url_for('dashboard'))
     
     try:
@@ -182,7 +182,7 @@ def add_project():
         description = request.form.get('description', '').strip()
         
         if not name:
-            flash('Project name is required.', 'error')
+            flash('Le nom du projet est requis.', 'error')
             return redirect(url_for('admin'))
         
         project = {
@@ -194,11 +194,11 @@ def add_project():
         }
         
         data_manager.add_project(project)
-        flash(f'Project "{name}" added successfully!', 'success')
+        flash(f'Projet "{name}" ajouté avec succès !', 'success')
         
     except Exception as e:
         logger.error(f"Error adding project: {str(e)}")
-        flash('Error adding project. Please try again.', 'error')
+        flash('Erreur lors de l\'ajout du projet. Veuillez réessayer.', 'error')
     
     return redirect(url_for('admin'))
 
@@ -206,28 +206,28 @@ def add_project():
 def remove_project(project_id):
     """Remove project (admin only)"""
     if not is_authenticated() or not is_admin():
-        flash('Access denied.', 'error')
+        flash('Accès refusé.', 'error')
         return redirect(url_for('dashboard'))
     
     try:
         if data_manager.remove_project(project_id):
-            flash('Project removed successfully!', 'success')
+            flash('Projet supprimé avec succès !', 'success')
         else:
-            flash('Project not found.', 'error')
+            flash('Projet introuvable.', 'error')
             
     except Exception as e:
         logger.error(f"Error removing project: {str(e)}")
-        flash('Error removing project. Please try again.', 'error')
+        flash('Erreur lors de la suppression du projet. Veuillez réessayer.', 'error')
     
     return redirect(url_for('admin'))
 
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
-    return render_template('login.html', error="Page not found"), 404
+    return render_template('login.html', error="Page introuvable"), 404
 
 @app.errorhandler(500)
 def internal_error(error):
     """Handle 500 errors"""
     logger.error(f"Internal server error: {str(error)}")
-    return render_template('login.html', error="Internal server error"), 500
+    return render_template('login.html', error="Erreur interne du serveur"), 500
