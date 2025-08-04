@@ -234,7 +234,11 @@ def view_entries():
         User.username,
         Project.name.label('project_name'),
         func.sum(TimeEntry.hours).label('total_hours')
-    ).join(User).join(Project).group_by(
+    ).select_from(TimeEntry).join(
+        User, TimeEntry.user_id == User.id
+    ).join(
+        Project, TimeEntry.project_id == Project.id
+    ).group_by(
         User.id, User.username, Project.id, Project.name
     ).order_by(User.username, Project.name).all()
     
