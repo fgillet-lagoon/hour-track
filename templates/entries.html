@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-primary mb-4">
+                <i class="bi bi-bar-chart"></i> Vue Globale des Entrées par Projets
+            </h2>
+        </div>
+    </div>
+
+    <!-- Statistiques par projet -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Répartition des Heures</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="hoursChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-orange text-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Nombre d'Entrées</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="entriesChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques par projet en tableau -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-table"></i> Statistiques par Projet</h5>
+                </div>
+                <div class="card-body">
+                    {% if project_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Projet</th>
+                                    <th class="text-end">Total Heures</th>
+                                    <th class="text-end">Nombre d'Entrées</th>
+                                    <th class="text-end">Moyenne par Entrée</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in project_stats %}
+                                <tr>
+                                    <td class="fw-bold">{{ stat.project_name }}</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-primary">{{ "%.1f"|format(stat.total_hours) }}h</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-secondary">{{ stat.entry_count }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-info">{{ "%.1f"|format(stat.total_hours / stat.entry_count) }}h</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Aucune entrée de temps trouvée.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste détaillée des entrées -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Toutes les Entrées</h5>
+                </div>
+                <div class="card-body">
+                    {% if all_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Utilisateur</th>
+                                    <th>Projet</th>
+                                    <th class="text-end">Heures</th>
+                                    <th>Notes</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry, project_name, username in all_entries %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ entry.date.strftime('%d/%m/%Y') }}</span>
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-person"></i> {{ username }}
+                                        {% if entry.user_id == current_user.id %}
+                                        <span class="badge bg-success ms-1">Vous</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">{{ project_name }}</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-primary">{{ entry.hours }}h</span>
+                                    </td>
+                                    <td>
+                                        {% if entry.notes %}
+                                        <small class="text-muted">{{ entry.notes }}</small>
+                                        {% else %}
+                                        <small class="text-muted fst-italic">Aucune note</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if current_user.is_admin or entry.user_id == current_user.id %}
+                                        <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
+                                              style="display: inline;">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Aucune entrée de temps trouvée.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Ajouter la première entrée
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js pour les graphiques -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data|tojson }};
+    
+    // Couleurs pour les graphiques
+    const colors = [
+        '#2563EB', '#EA580C', '#059669', '#DC2626', '#7C3AED',
+        '#DB2777', '#0891B2', '#CA8A04', '#16A34A', '#E11D48'
+    ];
+    
+    // Graphique des heures
+    const hoursCtx = document.getElementById('hoursChart').getContext('2d');
+    new Chart(hoursCtx, {
+        type: 'doughnut',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                data: chartData.hours,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + 'h';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique des entrées
+    const entriesCtx = document.getElementById('entriesChart').getContext('2d');
+    new Chart(entriesCtx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Nombre d\'entrées',
+                data: chartData.entries,
+                backgroundColor: colors[1],
+                borderColor: colors[1],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

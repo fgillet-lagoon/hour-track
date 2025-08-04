@@ -136,6 +136,7 @@
                                 <th>Heures</th>
                                 <th>Notes</th>
                                 <th>Enregistré le</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -157,6 +158,15 @@
                                     <small class="text-muted">
                                         {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}
                                     </small>
+                                </td>
+                                <td class="text-center">
+                                    <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}

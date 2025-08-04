@@ -148,6 +148,38 @@ def dashboard():
                          project_hours=project_hours,
                          user_time_entries=user_time_entries)
 
+@app.route('/entries')
+@login_required
+def view_entries():
+    """Vue globale des entrées par projets avec graphiques"""
+    from sqlalchemy import func
+    
+    # Récupérer toutes les entrées groupées par projet
+    project_stats = db.session.query(
+        Project.name.label('project_name'),
+        func.sum(TimeEntry.hours).label('total_hours'),
+        func.count(TimeEntry.id).label('entry_count')
+    ).join(TimeEntry).group_by(Project.id, Project.name).all()
+    
+    # Récupérer les entrées récentes avec détails
+    all_entries = db.session.query(TimeEntry, Project.name, User.username).join(
+        Project, TimeEntry.project_id == Project.id
+    ).join(
+        User, TimeEntry.user_id == User.id
+    ).order_by(TimeEntry.date.desc(), TimeEntry.created_at.desc()).all()
+    
+    # Préparer les données pour les graphiques
+    chart_data = {
+        'labels': [stat.project_name for stat in project_stats],
+        'hours': [float(stat.total_hours) for stat in project_stats],
+        'entries': [stat.entry_count for stat in project_stats]
+    }
+    
+    return render_template('entries.html',
+                         project_stats=project_stats,
+                         all_entries=all_entries,
+                         chart_data=chart_data)
+
 @app.route('/log_time', methods=['POST'])
 @login_required
 def log_time():
@@ -397,6 +429,44 @@ def delete_user(user_id):
         db.session.rollback()
     
     return redirect(url_for('manage_users'))
+
+@app.route('/delete_entry/<int:entry_id>', methods=['POST'])
+@login_required
+def delete_entry(entry_id):
+    """Supprimer une entrée de temps"""
+    try:
+        entry = TimeEntry.query.get(entry_id)
+        if not entry:
+            flash('Entrée introuvable.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Vérifier les permissions
+        # Les utilisateurs peuvent supprimer leurs propres entrées
+        # Les admins peuvent supprimer toutes les entrées
+        if not current_user.is_admin and entry.user_id != current_user.id:
+            flash('Vous ne pouvez supprimer que vos propres entrées.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Récupérer les infos avant suppression pour le message
+        project_name = entry.project.name
+        hours = entry.hours
+        
+        db.session.delete(entry)
+        db.session.commit()
+        
+        flash(f'Entrée supprimée : {hours}h sur {project_name}', 'success')
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la suppression de l'entrée: {str(e)}")
+        flash('Erreur lors de la suppression. Veuillez réessayer.', 'error')
+        db.session.rollback()
+    
+    # Rediriger vers la page d'origine
+    referer = request.headers.get('Referer')
+    if referer and '/entries' in referer:
+        return redirect(url_for('view_entries'))
+    else:
+        return redirect(url_for('dashboard'))
 
 @app.errorhandler(404)
 def not_found(error):
