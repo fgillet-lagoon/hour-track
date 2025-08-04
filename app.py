@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from models import db, User, Project, TimeEntry
 
@@ -666,6 +667,89 @@ def edit_entry(entry_id):
         flash('Erreur lors de la modification. Veuillez réessayer.', 'error')
         db.session.rollback()
         return redirect(url_for('dashboard'))
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    """Changer le mot de passe de l'utilisateur connecté"""
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validation
+        if not current_password or not new_password or not confirm_password:
+            flash('Tous les champs sont obligatoires.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if new_password != confirm_password:
+            flash('La confirmation du mot de passe ne correspond pas.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if len(new_password) < 4:
+            flash('Le mot de passe doit contenir au moins 4 caractères.', 'error')
+            return redirect(url_for('change_password'))
+        
+        # Vérifier le mot de passe actuel
+        if not check_password_hash(current_user.password_hash, current_password):
+            flash('Mot de passe actuel incorrect.', 'error')
+            return redirect(url_for('change_password'))
+        
+        try:
+            # Mettre à jour le mot de passe
+            current_user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            flash('Mot de passe modifié avec succès.', 'success')
+            return redirect(url_for('dashboard'))
+            
+        except Exception as e:
+            logger.error(f"Erreur lors du changement de mot de passe: {str(e)}")
+            flash('Erreur lors du changement de mot de passe. Veuillez réessayer.', 'error')
+            db.session.rollback()
+    
+    return render_template('change_password.html')
+
+@app.route('/admin/change_user_password/<int:user_id>', methods=['POST'])
+@login_required
+def admin_change_user_password(user_id):
+    """Changer le mot de passe d'un utilisateur (admin uniquement)"""
+    if not current_user.is_admin:
+        flash('Accès refusé. Seuls les administrateurs peuvent modifier les mots de passe.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            flash('Utilisateur introuvable.', 'error')
+            return redirect(url_for('manage_users'))
+        
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validation
+        if not new_password or not confirm_password:
+            flash('Tous les champs sont obligatoires.', 'error')
+            return redirect(url_for('manage_users'))
+        
+        if new_password != confirm_password:
+            flash('La confirmation du mot de passe ne correspond pas.', 'error')
+            return redirect(url_for('manage_users'))
+        
+        if len(new_password) < 4:
+            flash('Le mot de passe doit contenir au moins 4 caractères.', 'error')
+            return redirect(url_for('manage_users'))
+        
+        # Mettre à jour le mot de passe
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        flash(f'Mot de passe de {user.username} modifié avec succès.', 'success')
+        
+    except Exception as e:
+        logger.error(f"Erreur lors du changement de mot de passe: {str(e)}")
+        flash('Erreur lors du changement de mot de passe. Veuillez réessayer.', 'error')
+        db.session.rollback()
+    
+    return redirect(url_for('manage_users'))
 
 @app.errorhandler(404)
 def not_found(error):

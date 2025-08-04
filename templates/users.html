@@ -101,73 +101,111 @@
                                 </td>
                                 <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
                                 <td>
-                                    <!-- Edit User Modal Trigger -->
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                                            data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    
-                                    <!-- Delete User (except current user) -->
-                                    {% if user.id != current_user.id %}
-                                    <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
-                                          style="display: inline;" 
-                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
+                                    <div class="btn-group" role="group">
+                                        <!-- Edit User Modal Trigger -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                    </form>
-                                    {% endif %}
+                                        
+                                        <!-- Change Password Modal Trigger -->
+                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                data-bs-toggle="modal" data-bs-target="#changePasswordModal{{ user.id }}">
+                                            <i class="bi bi-key"></i>
+                                        </button>
+                                        
+                                        <!-- Delete User (except current user) -->
+                                        {% if user.id != current_user.id %}
+                                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                              style="display: inline;" 
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
-                            
-                            <!-- Edit User Modal -->
-                            <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Modifier l'utilisateur</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label for="edit_username{{ user.id }}" class="form-label">Nom d'utilisateur</label>
-                                                    <input type="text" class="form-control" id="edit_username{{ user.id }}" 
-                                                           name="username" value="{{ user.username }}" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="edit_password{{ user.id }}" class="form-label">Nouveau mot de passe</label>
-                                                    <input type="password" class="form-control" id="edit_password{{ user.id }}" 
-                                                           name="password" placeholder="Laisser vide pour conserver l'actuel">
-                                                    <small class="form-text text-muted">
-                                                        Laisser vide pour conserver le mot de passe actuel
-                                                    </small>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="edit_is_admin{{ user.id }}" name="is_admin" 
-                                                           {% if user.is_admin %}checked{% endif %}>
-                                                    <label class="form-check-label" for="edit_is_admin{{ user.id }}">
-                                                        Administrateur
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                    Annuler
-                                                </button>
-                                                <button type="submit" class="btn btn-lagoon">
-                                                    <i class="bi bi-check-circle me-1"></i>Sauvegarder
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Modals (outside the loop to prevent blinking) -->
+                {% for user in users %}
+                <!-- Edit User Modal -->
+                <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Modifier l'utilisateur {{ user.username }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="edit_username{{ user.id }}" class="form-label">Nom d'utilisateur</label>
+                                        <input type="text" class="form-control" id="edit_username{{ user.id }}" 
+                                               name="username" value="{{ user.username }}" required>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="edit_is_admin{{ user.id }}" name="is_admin" 
+                                               {% if user.is_admin %}checked{% endif %}>
+                                        <label class="form-check-label" for="edit_is_admin{{ user.id }}">
+                                            Administrateur
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="btn btn-lagoon">
+                                        <i class="bi bi-check-circle me-1"></i>Sauvegarder
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Change Password Modal -->
+                <div class="modal fade" id="changePasswordModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Changer le mot de passe de {{ user.username }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('admin_change_user_password', user_id=user.id) }}">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="new_password{{ user.id }}" class="form-label">Nouveau mot de passe</label>
+                                        <input type="password" class="form-control" id="new_password{{ user.id }}" 
+                                               name="new_password" minlength="4" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="confirm_password{{ user.id }}" class="form-label">Confirmer le mot de passe</label>
+                                        <input type="password" class="form-control" id="confirm_password{{ user.id }}" 
+                                               name="confirm_password" minlength="4" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-key me-1"></i>Changer le mot de passe
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
                 {% else %}
                 <div class="text-center py-4">
                     <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
