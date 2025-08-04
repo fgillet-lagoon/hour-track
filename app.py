@@ -152,7 +152,8 @@ def dashboard():
 @login_required
 def view_entries():
     """Vue globale des entrées par projets avec graphiques"""
-    from sqlalchemy import func
+    from sqlalchemy import func, extract
+    from datetime import datetime, timedelta
     
     # Récupérer toutes les entrées groupées par projet
     project_stats = db.session.query(
@@ -168,11 +169,52 @@ def view_entries():
         User, TimeEntry.user_id == User.id
     ).order_by(TimeEntry.date.desc(), TimeEntry.created_at.desc()).all()
     
+    # Calcul des heures par mois pour les 12 derniers mois
+    today = datetime.now().date()
+    twelve_months_ago = today.replace(day=1) - timedelta(days=365)
+    
+    monthly_stats = db.session.query(
+        extract('year', TimeEntry.date).label('year'),
+        extract('month', TimeEntry.date).label('month'),
+        func.sum(TimeEntry.hours).label('total_hours')
+    ).filter(
+        TimeEntry.date >= twelve_months_ago
+    ).group_by(
+        extract('year', TimeEntry.date),
+        extract('month', TimeEntry.date)
+    ).order_by('year', 'month').all()
+    
+    # Créer la liste des 12 derniers mois avec les données
+    monthly_data = []
+    monthly_labels = []
+    current_date = twelve_months_ago
+    
+    for i in range(12):
+        month_year = current_date.strftime('%m/%Y')
+        month_name = current_date.strftime('%b %Y')
+        monthly_labels.append(month_name)
+        
+        # Trouver les heures pour ce mois
+        hours_for_month = 0
+        for stat in monthly_stats:
+            if int(stat.year) == current_date.year and int(stat.month) == current_date.month:
+                hours_for_month = float(stat.total_hours)
+                break
+        
+        monthly_data.append(hours_for_month)
+        
+        # Passer au mois suivant
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=current_date.month + 1)
+    
     # Préparer les données pour les graphiques
     chart_data = {
         'labels': [stat.project_name for stat in project_stats],
         'hours': [float(stat.total_hours) for stat in project_stats],
-        'entries': [stat.entry_count for stat in project_stats]
+        'monthly_labels': monthly_labels,
+        'monthly_hours': monthly_data
     }
     
     return render_template('entries.html',

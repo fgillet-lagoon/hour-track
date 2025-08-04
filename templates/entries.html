@@ -25,10 +25,10 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-orange text-white">
-                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Nombre d'Entrées</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-month"></i> Heures par Mois (12 derniers mois)</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="entriesChart" width="400" height="300"></canvas>
+                    <canvas id="monthlyChart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
@@ -49,7 +49,6 @@
                                 <tr>
                                     <th>Projet</th>
                                     <th class="text-end">Total Heures</th>
-                                    <th class="text-end">Nombre d'Entrées</th>
                                     <th class="text-end">Moyenne par Entrée</th>
                                 </tr>
                             </thead>
@@ -59,9 +58,6 @@
                                     <td class="fw-bold">{{ stat.project_name }}</td>
                                     <td class="text-end">
                                         <span class="badge bg-primary">{{ "%.1f"|format(stat.total_hours) }}h</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <span class="badge bg-secondary">{{ stat.entry_count }}</span>
                                     </td>
                                     <td class="text-end">
                                         <span class="badge bg-info">{{ "%.1f"|format(stat.total_hours / stat.entry_count) }}h</span>
@@ -202,18 +198,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Graphique des entrées
-    const entriesCtx = document.getElementById('entriesChart').getContext('2d');
-    new Chart(entriesCtx, {
-        type: 'bar',
+    // Graphique mensuel
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
         data: {
-            labels: chartData.labels,
+            labels: chartData.monthly_labels,
             datasets: [{
-                label: 'Nombre d\'entrées',
-                data: chartData.entries,
-                backgroundColor: colors[1],
-                borderColor: colors[1],
-                borderWidth: 1
+                label: 'Heures par mois',
+                data: chartData.monthly_hours,
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                borderColor: '#EA580C',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#EA580C',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
             }]
         },
         options: {
@@ -222,13 +224,27 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' heures';
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        callback: function(value) {
+                            return value + 'h';
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45
                     }
                 }
             }
