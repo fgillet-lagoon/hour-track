@@ -1,171 +1,182 @@
-/* Custom styles for Lagoon Time Tracker application */
-
-/* Lagoon Brand Colors */
+/* Lagoon Color Palette */
 :root {
     --lagoon-blue: #2563EB;
     --lagoon-orange: #EA580C;
-    --lagoon-blue-light: #3B82F6;
-    --lagoon-orange-light: #F97316;
     --lagoon-blue-dark: #1D4ED8;
-    --lagoon-orange-dark: #DC2626;
+    --lagoon-orange-dark: #C2410C;
 }
 
-/* Override Bootstrap primary and secondary colors */
-:root {
-    --bs-primary: var(--lagoon-blue);
-    --bs-primary-rgb: 37, 99, 235;
-    --bs-secondary: var(--lagoon-orange);
-    --bs-secondary-rgb: 234, 88, 12;
-    --bs-success: #22C55E;
-    --bs-info: var(--lagoon-blue-light);
-    --bs-warning: var(--lagoon-orange-light);
-    --bs-danger: #EF4444;
-}
-
-/* Ensure proper spacing and layout */
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(255, 255, 255, 0.125);
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-/* Form improvements */
-.form-control:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
-}
-
-/* Button enhancements */
-.btn {
-    border-radius: 0.375rem;
-    font-weight: 500;
-}
-
-.btn-sm {
-    font-size: 0.875rem;
-}
-
-/* Table improvements */
-.table {
-    margin-bottom: 0;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    color: var(--bs-body-color);
-}
-
-/* Badge styling */
-.badge {
-    font-size: 0.75em;
-    font-weight: 500;
-}
-
-/* Navigation enhancements */
-.navbar-brand {
-    font-weight: 600;
-    font-size: 1.25rem;
-}
-
-.navbar-brand img {
-    height: 32px;
-    margin-right: 8px;
-}
-
-/* Lagoon specific brand styling */
-.lagoon-brand {
-    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
-}
-
+/* Custom Lagoon Button */
 .btn-lagoon {
     background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
     border: none;
     color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .btn-lagoon:hover {
     background: linear-gradient(135deg, var(--lagoon-blue-dark) 0%, var(--lagoon-orange-dark) 100%);
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-.badge-lagoon {
-    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
+.btn-lagoon:focus {
+    background: linear-gradient(135deg, var(--lagoon-blue-dark) 0%, var(--lagoon-orange-dark) 100%);
     color: white;
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
 }
 
-/* Alert improvements */
-.alert {
-    border: none;
-    border-radius: 0.5rem;
+/* Lagoon Badge */
+.bg-lagoon {
+    background: linear-gradient(135deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%) !important;
 }
 
-/* Empty state styling */
-.text-center .display-1,
-.text-center .display-4 {
-    opacity: 0.5;
+/* Logo Styling */
+.logo {
+    height: 60px;
+    width: auto;
 }
 
-/* Card hover effects */
+.logo-nav {
+    height: 32px;
+    width: auto;
+}
+
+/* Enhanced Cards */
+.card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.3s ease;
+}
+
 .card:hover {
     transform: translateY(-2px);
-    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-/* Form validation states */
-.was-validated .form-control:valid {
-    border-color: var(--bs-success);
+/* Project Cards */
+.project-card {
+    border-left: 4px solid var(--lagoon-blue);
+    transition: all 0.3s ease;
 }
 
-.was-validated .form-control:invalid {
-    border-color: var(--bs-danger);
+.project-card:hover {
+    border-left-color: var(--lagoon-orange);
+    background: rgba(37, 99, 235, 0.05);
 }
 
-/* Responsive improvements */
+/* Time Entry Form Enhancements */
+.time-entry-form {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Stats Cards */
+.stat-card {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%);
+    transform: translateY(-2px);
+}
+
+/* Form Controls Enhancement */
+.form-control:focus {
+    border-color: var(--lagoon-blue);
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--lagoon-blue);
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
+}
+
+/* Table Enhancements */
+.table-hover tbody tr:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+/* Navigation Enhancement */
+.navbar-brand:hover {
+    color: var(--lagoon-orange) !important;
+}
+
+/* Alert Customization */
+.alert-success {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #86efac;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.alert-info {
+    background-color: rgba(37, 99, 235, 0.1);
+    border-color: rgba(37, 99, 235, 0.3);
+    color: #93c5fd;
+}
+
+/* Progress Bars */
+.progress-bar-lagoon {
+    background: linear-gradient(90deg, var(--lagoon-blue) 0%, var(--lagoon-orange) 100%);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+    .logo {
+        height: 45px;
     }
     
-    .card-body {
-        padding: 1rem;
+    .logo-nav {
+        height: 28px;
     }
     
-    .btn-lg {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
+    .card {
+        margin-bottom: 1rem;
     }
 }
 
-/* Loading states */
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+/* Animation for loading states */
+@keyframes pulse-lagoon {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
 }
 
-/* Custom scrollbar for tables */
-.table-responsive::-webkit-scrollbar {
-    height: 8px;
+.pulse-lagoon {
+    animation: pulse-lagoon 2s infinite;
 }
 
-.table-responsive::-webkit-scrollbar-track {
-    background: var(--bs-gray-200);
-    border-radius: 4px;
+/* Footer styling */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.table-responsive::-webkit-scrollbar-thumb {
-    background: var(--bs-gray-400);
-    border-radius: 4px;
+main {
+    flex: 1;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: var(--bs-gray-500);
+/* Custom input group styling */
+.input-group-text {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--lagoon-blue);
 }

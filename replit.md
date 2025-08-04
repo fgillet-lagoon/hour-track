@@ -2,69 +2,80 @@
 
 ## Overview
 
-Une application Flask de suivi du temps avec intégration SSO SAML Microsoft. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires pour gérer les projets et voir toutes les entrées de temps.
+Une application Flask de suivi du temps avec authentification basique par nom d'utilisateur/mot de passe. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets et d'utilisateurs. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires.
+
+## Recent Changes (2025-08-04)
+
+- **Migration d'authentification**: Changement de SAML SSO vers authentification basique login/password
+- **Base de données PostgreSQL**: Migration de JSON vers PostgreSQL avec Flask-SQLAlchemy
+- **Utilisateurs par défaut**: Création automatique de fgillet (admin) et htepa (utilisateur standard)
+- **Interface française**: Toutes les interfaces traduites en français avec branding Lagoon
+- **Gestion CRUD**: Interface complète pour la gestion des utilisateurs (admin uniquement)
 
 ## User Preferences
 
 - Preferred communication style: Simple, everyday language.
 - Language: French (all UI text and messages)
 - Branding: Lagoon logo and color scheme (blue #2563EB and orange #EA580C)
+- Authentication: Basic username/password (fgillet/fgillet pour admin, htepa/htepa pour utilisateur)
 
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: Flask with Jinja2 templating
-- **UI Framework**: Bootstrap 5 with dark theme and Bootstrap Icons
-- **Styling**: Custom CSS for enhanced UI components and form styling
+- **UI Framework**: Bootstrap 5 with Replit dark theme and Bootstrap Icons
+- **Styling**: Custom CSS with Lagoon color palette and gradient buttons
 - **Templates**: Modular template structure with base template inheritance
 - **Client-side**: Minimal JavaScript, primarily server-side rendered
 
 ### Backend Architecture
-- **Framework**: Flask web framework
-- **Session Management**: Flask sessions with configurable secret key
-- **Authentication**: SAML-based SSO integration with Microsoft Azure AD
-- **Authorization**: Role-based access control with hardcoded admin users
-- **Data Layer**: JSON file-based storage with DataManager abstraction
+- **Framework**: Flask web framework with Flask-Login for session management
+- **Authentication**: Simple username/password authentication with password hashing
+- **Authorization**: Role-based access control with database-stored admin flags
+- **Data Layer**: PostgreSQL database with SQLAlchemy ORM
 - **Logging**: Python logging module with debug-level configuration
 
 ### Data Storage
-- **Storage Type**: JSON files in local filesystem
-- **Data Structure**: 
-  - Projects: ID, name, description, creation metadata
-  - Time Entries: User, project, hours, date, notes
-  - Users: User profile information
-- **File Organization**: Centralized in `/data` directory
-- **Initialization**: Automatic creation of default data and directory structure
+- **Storage Type**: PostgreSQL database
+- **Data Models**: 
+  - Users: username, password_hash, is_admin, created_at
+  - Projects: name, description, created_by_id, created_at
+  - TimeEntries: user_id, project_id, hours, date, notes, created_at
+- **Database Initialization**: Automatic table creation and default data seeding
+- **Relationships**: Proper foreign keys and cascading deletes
 
 ### Authentication & Authorization
-- **Primary Auth**: SAML 2.0 with Microsoft Azure AD
+- **Primary Auth**: Flask-Login with username/password authentication
+- **Password Security**: Werkzeug password hashing with salt
 - **Session Management**: Flask sessions for user state persistence
-- **Admin Access**: Hardcoded email-based admin user identification
-- **Security**: Configurable SAML security settings including signing and encryption options
+- **Admin Access**: Database flag-based admin user identification
+- **Default Users**: fgillet (admin), htepa (regular user)
 
 ### Application Structure
-- **Entry Point**: `main.py` for development server startup
-- **Core Application**: `app.py` containing routes and business logic
-- **Authentication Module**: `saml_auth.py` for SAML integration
-- **Data Module**: `data_manager.py` for JSON file operations
-- **Configuration**: SAML settings in JSON format with environment variable override support
+- **Entry Point**: `main.py` for Gunicorn server startup
+- **Core Application**: `app.py` containing all routes and business logic
+- **Data Models**: `models.py` with SQLAlchemy model definitions
+- **Templates**: French language templates with Lagoon branding
+- **Static Assets**: Custom CSS with Lagoon color scheme and logo
 
 ## External Dependencies
 
-### Authentication Services
-- **Microsoft Azure AD**: SAML identity provider for SSO authentication
-- **SAML Configuration**: Requires tenant ID and X.509 certificates for production use
+### Database Services
+- **PostgreSQL**: Primary database for all application data
+- **Environment Variables**: DATABASE_URL and related PG* variables
 
 ### Frontend Libraries
-- **Bootstrap 5**: UI framework loaded via CDN
+- **Bootstrap 5**: UI framework with Replit dark theme
 - **Bootstrap Icons**: Icon library for UI components
-- **Replit Bootstrap Theme**: Dark theme variant for consistent styling
+- **Custom CSS**: Lagoon-branded styling with gradient effects
 
 ### Python Libraries
-- **Flask**: Web framework for application server
-- **Standard Library**: datetime, json, os, logging, uuid, urllib, xml.etree.ElementTree for core functionality
+- **Flask**: Web framework and extensions (Flask-Login, Flask-SQLAlchemy)
+- **SQLAlchemy**: ORM for database operations
+- **Werkzeug**: Password hashing and security utilities
+- **Gunicorn**: WSGI server for production deployment
 
 ### Development Infrastructure
-- **File System**: Local JSON files for data persistence
-- **Environment Variables**: Configuration for SAML settings and session secrets
-- **Static Assets**: CSS and potential future JavaScript files served via Flask
+- **PostgreSQL Database**: Persistent data storage
+- **Environment Variables**: Configuration for database and session secrets
+- **Static Assets**: Logo and custom CSS served via Flask
