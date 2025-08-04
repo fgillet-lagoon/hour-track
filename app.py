@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy import func, extract
 from models import db, User, Project, TimeEntry
 
 # Configure logging
@@ -153,8 +154,7 @@ def dashboard():
 @login_required
 def view_entries():
     """Vue globale des entrées par projets avec graphiques"""
-    from sqlalchemy import func, extract
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     
     # Récupérer toutes les entrées groupées par projet
     project_stats = db.session.query(
@@ -672,8 +672,7 @@ def edit_entry(entry_id):
 @login_required
 def my_entries():
     """Vue personnelle des entrées avec recherche et graphiques"""
-    from sqlalchemy import func, extract
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     
     # Récupérer les paramètres de recherche
     search_project = request.args.get('project', '')

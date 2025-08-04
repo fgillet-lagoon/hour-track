@@ -85,8 +85,7 @@
                     </div>
                     <div class="col-md-2">
                         <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" 
-                               value="{{ moment().format('YYYY-MM-DD') }}" required>
+                        <input type="date" class="form-control" id="date" name="date" required>
                     </div>
                     <div class="col-md-3">
                         <label for="notes" class="form-label">Notes (optionnel)</label>
@@ -210,7 +209,10 @@
                         <div class="d-flex align-items-center">
                             <i class="bi bi-calculator text-info me-2"></i>
                             <strong>Total des heures affichées: 
-                                <span class="text-success">{{ entries | sum(attribute='hours') }}h</span>
+                                <span class="text-success">
+                                    {% set total_hours = entries | sum(attribute='hours') %}
+                                    {{ "%.1f"|format(total_hours) }}h
+                                </span>
                             </strong>
                         </div>
                     </div>
