@@ -79,7 +79,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="hoursChart" width="400" height="300"></canvas>
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="hoursChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -91,7 +93,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="monthlyChart" width="400" height="300"></canvas>
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -295,10 +299,77 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Empêcher le zoom et les interactions tactiles problématiques sur mobile */
+@media (max-width: 767px) {
+    .card-body canvas {
+        touch-action: pan-y !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    
+    .card-body {
+        overflow: hidden;
+    }
+    
+    /* Fixer la taille des conteneurs de graphiques sur mobile */
+    .card-body > div[style*="position: relative"] {
+        height: 250px !important;
+        max-width: 100% !important;
+        overflow: hidden;
+    }
+}
+
+/* Empêcher le zoom sur focus des graphiques */
+canvas {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const colors = ['#2563EB', '#EA580C', '#DC2626', '#059669', '#7C3AED', '#DB2777', '#0891B2', '#CA8A04'];
+    
+    // Configuration globale pour empêcher les interactions problématiques sur mobile
+    Chart.defaults.interaction.mode = 'nearest';
+    Chart.defaults.hover.intersect = false;
+    
+    // Désactiver les événements tactiles problématiques
+    function preventMobileZoom(chart) {
+        const canvas = chart.canvas;
+        
+        // Empêcher le zoom tactile
+        canvas.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Empêcher le double-tap zoom
+        let lastTap = 0;
+        canvas.addEventListener('touchend', function(e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 500 && tapLength > 0) {
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        }, { passive: false });
+    }
     
     // Graphique 1: Répartition des heures par projet (camembert)
     const ctx = document.getElementById('hoursChart').getContext('2d');
@@ -307,7 +378,7 @@
     const projectLabels = [{% for stat in project_stats %}'{{ stat.project_name }}'{% if not loop.last %}, {% endif %}{% endfor %}];
     const projectHours = [{% for stat in project_stats %}{{ stat.total_hours }}{% if not loop.last %}, {% endif %}{% endfor %}];
     
-    new Chart(ctx, {
+    const hoursChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: projectLabels,
@@ -321,6 +392,16 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false
+            },
+            onResize: function(chart, size) {
+                // Empêcher le redimensionnement sur mobile
+                if (window.innerWidth < 768) {
+                    chart.canvas.style.height = '300px';
+                    chart.canvas.style.width = '100%';
+                }
+            },
             plugins: {
                 legend: {
                     position: 'bottom'
@@ -337,6 +418,9 @@
             }
         }
     });
+    
+    // Appliquer la prévention du zoom mobile
+    preventMobileZoom(hoursChart);
     {% else %}
     // Pas de données
     ctx.font = "16px Arial";
@@ -364,7 +448,7 @@
         colorIndex++;
     }
     
-    new Chart(monthlyCtx, {
+    const monthlyChart = new Chart(monthlyCtx, {
         type: 'bar',
         data: {
             labels: monthlyLabels,
@@ -373,6 +457,16 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false
+            },
+            onResize: function(chart, size) {
+                // Empêcher le redimensionnement sur mobile
+                if (window.innerWidth < 768) {
+                    chart.canvas.style.height = '300px';
+                    chart.canvas.style.width = '100%';
+                }
+            },
             scales: {
                 x: {
                     stacked: true
@@ -402,6 +496,9 @@
             }
         }
     });
+    
+    // Appliquer la prévention du zoom mobile
+    preventMobileZoom(monthlyChart);
     {% else %}
     // Pas de données mensuelles
     monthlyCtx.font = "16px Arial";
