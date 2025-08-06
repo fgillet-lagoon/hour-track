@@ -154,7 +154,7 @@
                             <tr>
                                 <th>Utilisateur</th>
                                 <th>Projet</th>
-                                <th>Date</th>
+                                <th>Période</th>
                                 <th>Heures</th>
                                 <th>Notes</th>
                                 <th>Enregistré le</th>
@@ -170,10 +170,10 @@
                                     {% endif %}
                                 </td>
                                 <td><strong>{{ entry.project.name }}</strong></td>
-                                <td>{{ entry.date.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ entry.get_display_date() }}</td>
                                 <td><span class="text-primary fw-bold">{{ entry.hours }}h</span></td>
                                 <td><span class="text-muted">{{ entry.notes or '-' }}</span></td>
-                                <td><small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                                <td><small class="text-muted">{{ entry.created_at.strftime('%d/%m/%Y %H:%M') if entry.created_at else '-' }}</small></td>
                             </tr>
                             {% endfor %}
                         </tbody>
