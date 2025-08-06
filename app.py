@@ -320,6 +320,7 @@ def log_time():
         time_entry.month = month
         time_entry.year = year
         time_entry.notes = notes
+        # Don't set old date fields
         
         db.session.add(time_entry)
         db.session.commit()
@@ -732,6 +733,7 @@ def add_my_entry():
         entry.month = month
         entry.year = year
         entry.notes = notes
+        # Don't set old date fields
         
         db.session.add(entry)
         db.session.commit()

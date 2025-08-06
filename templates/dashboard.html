@@ -134,7 +134,7 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>Date</th>
+                                <th>Période</th>
                                 <th>Projet</th>
                                 <th>Heures</th>
                                 <th>Notes</th>
@@ -146,7 +146,7 @@
                             {% for entry in user_time_entries %}
                             <tr>
                                 <td>
-                                    <span class="fw-medium">{{ entry.date.strftime('%d/%m/%Y') }}</span>
+                                    <span class="fw-medium">{{ entry.get_display_date() }}</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary">{{ entry.project.name }}</span>
@@ -164,11 +164,11 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" 
+                                        <a href="{{ url_for('edit_my_entry', entry_id=entry.id) }}" 
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
+                                        <form method="POST" action="{{ url_for('delete_my_entry', entry_id=entry.id) }}" 
                                               onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')" 
                                               style="display: inline;">
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -199,10 +199,14 @@
 
 {% block scripts %}
 <script>
-// Set today's date as default
+// Set current month as default
 document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('date').value = today;
+    const now = new Date();
+    const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthField = document.getElementById('month_year');
+    if (monthField) {
+        monthField.value = currentMonth;
+    }
 });
 </script>
 {% endblock %}
