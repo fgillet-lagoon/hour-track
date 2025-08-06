@@ -860,17 +860,18 @@ def view_entries():
             func.count(TimeEntry.id).label('entry_count')
         ).join(TimeEntry).group_by(Project.id, Project.name).all()
         
-        # Calculer les données pour les graphiques mensuels (version simplifiée)
-        from datetime import datetime, timedelta
+        # Calculer les données pour les graphiques mensuels (12 derniers mois)
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
         
-        # Données pour les graphiques sur les 6 derniers mois
+        # Données pour les graphiques sur les 12 derniers mois
         projects_monthly_data = {}
         monthly_labels = []
         
-        # Créer les labels des 6 derniers mois
+        # Créer les labels des 12 derniers mois
         now = datetime.now()
-        for i in range(5, -1, -1):
-            month_date = now - timedelta(days=30*i)
+        for i in range(11, -1, -1):
+            month_date = now - relativedelta(months=i)
             monthly_labels.append(f"{month_date.strftime('%m')}/{month_date.year}")
         
         # Récupérer les données mensuelles pour les graphiques
@@ -881,21 +882,37 @@ def view_entries():
             func.sum(TimeEntry.hours).label('total_hours')
         ).join(TimeEntry).group_by(Project.name, TimeEntry.month, TimeEntry.year).all()
         
-        # Organiser les données par projet
+        # Organiser les données par projet pour les 12 derniers mois
         for stat in project_stats:
-            projects_monthly_data[stat.project_name] = [0] * 6
+            projects_monthly_data[stat.project_name] = [0] * 12
         
-        # Remplir les données mensuelles
+        # Calculer les totaux par mois pour calculer les pourcentages
+        monthly_totals = [0] * 12
+        
+        # Remplir les données mensuelles avec les heures brutes
         for stat in monthly_project_stats:
             if stat.project_name in projects_monthly_data:
                 try:
-                    # Calculer l'index du mois dans les 6 derniers mois
+                    # Calculer l'index du mois dans les 12 derniers mois
                     month_key = f"{stat.month:02d}/{stat.year}"
                     if month_key in monthly_labels:
                         month_idx = monthly_labels.index(month_key)
-                        projects_monthly_data[stat.project_name][month_idx] = float(stat.total_hours)
+                        hours = float(stat.total_hours)
+                        projects_monthly_data[stat.project_name][month_idx] = hours
+                        monthly_totals[month_idx] += hours
                 except (ValueError, TypeError):
                     continue
+        
+        # Convertir en pourcentages basés sur le total du mois
+        for project_name in projects_monthly_data:
+            for month_idx in range(12):
+                if monthly_totals[month_idx] > 0:
+                    # Calculer le pourcentage pour ce projet ce mois-ci
+                    project_hours = projects_monthly_data[project_name][month_idx]
+                    percentage = (project_hours / monthly_totals[month_idx]) * 100
+                    projects_monthly_data[project_name][month_idx] = round(percentage, 1)
+                else:
+                    projects_monthly_data[project_name][month_idx] = 0
         
         # Utiliser la vraie pagination
         pagination = entries_pagination
