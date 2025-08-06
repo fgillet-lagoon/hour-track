@@ -821,15 +821,37 @@ def view_entries():
     try:
         logger.info("Début de view_entries")
         
-        # Récupérer les données réelles mais de manière optimisée
+        # Récupérer les paramètres de recherche et pagination
+        search_project = request.args.get('project', '')
+        search_term = request.args.get('term', '')
+        search_user = request.args.get('user', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        
+        # Query de base pour toutes les entrées
+        query = TimeEntry.query
+        
+        # Filtrage par projet si spécifié
+        if search_project:
+            query = query.filter(TimeEntry.project_id == search_project)
+        
+        # Filtrage par terme de recherche dans les notes
+        if search_term:
+            query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
+        
+        # Filtrage par utilisateur si spécifié
+        if search_user:
+            query = query.filter(TimeEntry.user_id == search_user)
+        
+        # Pagination des entrées filtrées avec détails
+        entries_pagination = query.join(Project).join(User).order_by(TimeEntry.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        time_entries = entries_pagination.items
+        
+        # Récupérer tous les projets et utilisateurs pour les filtres
         projects = Project.query.all()
         users = User.query.all()
-        
-        # Dernières 20 entrées avec leurs relations
-        time_entries = db.session.query(TimeEntry).options(
-            db.joinedload(TimeEntry.project),
-            db.joinedload(TimeEntry.user)
-        ).order_by(TimeEntry.created_at.desc()).limit(20).all()
         
         # Stats basiques par projet
         project_stats = db.session.query(
@@ -838,36 +860,58 @@ def view_entries():
             func.count(TimeEntry.id).label('entry_count')
         ).join(TimeEntry).group_by(Project.id, Project.name).all()
         
+        # Calculer les données pour les graphiques mensuels (version simplifiée)
+        from datetime import datetime, timedelta
+        
+        # Données pour les graphiques sur les 6 derniers mois
         projects_monthly_data = {}
         monthly_labels = []
         
-        # Pagination vide
-        class FakePagination:
-            def __init__(self):
-                self.items = []
-                self.page = 1
-                self.pages = 1
-                self.per_page = 10
-                self.total = 0
-                self.has_prev = False
-                self.has_next = False
-                self.prev_num = None
-                self.next_num = None
+        # Créer les labels des 6 derniers mois
+        now = datetime.now()
+        for i in range(5, -1, -1):
+            month_date = now - timedelta(days=30*i)
+            monthly_labels.append(f"{month_date.strftime('%m')}/{month_date.year}")
         
-        pagination = FakePagination()
+        # Récupérer les données mensuelles pour les graphiques
+        monthly_project_stats = db.session.query(
+            Project.name.label('project_name'),
+            TimeEntry.month,
+            TimeEntry.year,
+            func.sum(TimeEntry.hours).label('total_hours')
+        ).join(TimeEntry).group_by(Project.name, TimeEntry.month, TimeEntry.year).all()
+        
+        # Organiser les données par projet
+        for stat in project_stats:
+            projects_monthly_data[stat.project_name] = [0] * 6
+        
+        # Remplir les données mensuelles
+        for stat in monthly_project_stats:
+            if stat.project_name in projects_monthly_data:
+                try:
+                    # Calculer l'index du mois dans les 6 derniers mois
+                    month_key = f"{stat.month:02d}/{stat.year}"
+                    if month_key in monthly_labels:
+                        month_idx = monthly_labels.index(month_key)
+                        projects_monthly_data[stat.project_name][month_idx] = float(stat.total_hours)
+                except (ValueError, TypeError):
+                    continue
+        
+        # Utiliser la vraie pagination
+        pagination = entries_pagination
         
         logger.info("Avant render_template")
         
-        return render_template('entries_simple.html', 
+        return render_template('entries.html', 
                              project_stats=project_stats, 
                              all_entries=time_entries,
                              projects_monthly_data=projects_monthly_data,
                              monthly_labels=monthly_labels,
                              projects=projects,
                              users=users,
-                             search_project='',
-                             search_term='',
-                             search_user='',
+                             search_project=search_project,
+                             search_term=search_term,
+                             search_user=search_user,
                              pagination=pagination)
     
     except Exception as e:
