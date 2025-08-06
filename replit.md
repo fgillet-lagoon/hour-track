@@ -4,19 +4,20 @@
 
 Une application Flask de suivi du temps avec authentification basique par nom d'utilisateur/mot de passe. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets et d'utilisateurs. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires.
 
-## Recent Changes (2025-08-04)
+## Recent Changes (2025-08-06)
 
+- **Correction majeure de stabilité**: Résolution des timeouts et erreurs 500 sur la page "Projet et Temps"
+- **Restauration complète des fonctionnalités**: Graphiques Chart.js, filtres de recherche et pagination entièrement opérationnels
+- **Optimisation des performances**: Requêtes de base de données optimisées pour éviter les blocages
+- **Interface graphique complète**: Graphiques en camembert par projet et répartition mensuelle sur 6 mois
+- **Système de recherche avancé**: Filtrage par projet, utilisateur et terme dans les notes avec pagination
 - **Migration d'authentification**: Changement de SAML SSO vers authentification basique login/password
 - **Base de données PostgreSQL**: Migration de JSON vers PostgreSQL avec Flask-SQLAlchemy
 - **Utilisateurs par défaut**: Création automatique de fgillet (admin) et htepa (utilisateur standard)
 - **Interface française**: Toutes les interfaces traduites en français avec branding Lagoon
 - **Gestion CRUD**: Interface complète pour la gestion des utilisateurs (admin uniquement)
-- **Vue personnelle**: Nouvelle section "Mes Entrées" avec recherche par projet/terme et CRUD complet
+- **Vue personnelle**: Section "Mes Entrées" avec recherche par projet/terme et CRUD complet
 - **Gestion des mots de passe**: Interface pour changer son mot de passe + admin peut changer celui des autres
-- **Navigation optimisée**: "Tableau de bord" avec icône speedometer, "Statistiques" avec graphiques simplifiés
-- **Interface allégée**: Suppression des graphiques complexes, moteur de recherche repositionné
-- **Recherche globale**: Filtrage par projet, utilisateur et terme de recherche dans les statistiques
-- **Système de pagination**: Limite de 10 entrées par page dans "Mes Entrées" et "Statistiques" avec contrôles de navigation Bootstrap
 
 ## User Preferences
 
