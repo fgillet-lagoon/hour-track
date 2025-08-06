@@ -817,36 +817,36 @@ def internal_error(error):
 @app.route('/entries')
 @login_required
 def view_entries():
-    """Vue des statistiques globales avec recherche et pagination"""
+    """Vue des statistiques globales - version ultra-minimaliste"""
     try:
-        # Version simplifiée pour éviter les timeouts
-        projects = Project.query.all()
-        users = User.query.all()
+        logger.info("Début de view_entries")
         
-        # Récupérer seulement les 20 dernières entrées
-        time_entries = db.session.query(TimeEntry).join(Project).join(User).order_by(TimeEntry.created_at.desc()).limit(20).all()
-        
-        # Stats basiques
+        # Version ultra-simple - juste quelques variables vides
+        projects = []
+        users = []
+        time_entries = []
         project_stats = []
         projects_monthly_data = {}
         monthly_labels = []
         
-        # Pagination factice pour compatibilité template
+        # Pagination vide
         class FakePagination:
-            def __init__(self, items):
-                self.items = items
+            def __init__(self):
+                self.items = []
                 self.page = 1
                 self.pages = 1
-                self.per_page = 20
-                self.total = len(items)
+                self.per_page = 10
+                self.total = 0
                 self.has_prev = False
                 self.has_next = False
                 self.prev_num = None
                 self.next_num = None
         
-        pagination = FakePagination(time_entries)
+        pagination = FakePagination()
         
-        return render_template('entries.html', 
+        logger.info("Avant render_template")
+        
+        return render_template('entries_simple.html', 
                              project_stats=project_stats, 
                              all_entries=time_entries,
                              projects_monthly_data=projects_monthly_data,
@@ -860,5 +860,4 @@ def view_entries():
     
     except Exception as e:
         logger.error(f"Erreur dans view_entries: {str(e)}")
-        flash('Erreur lors du chargement des statistiques.', 'error')
-        return redirect(url_for('dashboard'))
+        return f"Erreur: {str(e)}", 500

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Statistiques - Lagoon Time Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2">
+                <i class="bi bi-graph-up text-info me-2"></i>
+                Statistiques Globales
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Tableau de Bord</a></li>
+                    <li class="breadcrumb-item active">Statistiques</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Version simplifiée sans graphiques JavaScript lourds -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list-ul me-2"></i>Statistiques Simplifiées
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Version simplifiée des statistiques pour améliorer les performances.</p>
+                
+                {% if project_stats %}
+                    <h6>Résumé par projet :</h6>
+                    <ul class="list-unstyled">
+                    {% for stat in project_stats %}
+                        <li>{{ stat.project_name }} : {{ stat.total_hours }} heures ({{ stat.entry_count }} entrées)</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Aucune statistique disponible pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des entrées récentes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Entrées Récentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if all_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Projet</th>
+                                    <th>Utilisateur</th>
+                                    <th>Heures</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in all_entries %}
+                                <tr>
+                                    <td>{{ entry.month }}/{{ entry.year }}</td>
+                                    <td>{{ entry.project.name if entry.project else 'N/A' }}</td>
+                                    <td>{{ entry.user.username if entry.user else 'N/A' }}</td>
+                                    <td>{{ entry.hours }}h</td>
+                                    <td>{{ entry.notes[:50] }}{% if entry.notes and entry.notes|length > 50 %}...{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune entrée trouvée.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
