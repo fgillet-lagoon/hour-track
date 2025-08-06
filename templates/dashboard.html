@@ -159,7 +159,7 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">
-                                        {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                        {{ entry.created_at.strftime('%d/%m/%Y %H:%M') if entry.created_at else '-' }}
                                     </small>
                                 </td>
                                 <td class="text-center">

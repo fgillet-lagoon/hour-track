@@ -179,7 +179,7 @@ def view_entries():
         query = query.filter(TimeEntry.user_id == search_user)
     
     # Pagination des entrées filtrées avec détails
-    entries_pagination = query.join(Project).join(User).order_by(TimeEntry.date.desc()).paginate(
+    entries_pagination = query.join(Project).join(User).order_by(TimeEntry.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     filtered_entries = entries_pagination.items
@@ -200,7 +200,7 @@ def view_entries():
         Project, TimeEntry.project_id == Project.id
     ).join(
         User, TimeEntry.user_id == User.id
-    ).order_by(TimeEntry.date.desc(), TimeEntry.created_at.desc()).all()
+    ).order_by(TimeEntry.created_at.desc()).all()
     
     # Calcul des heures par projet par mois pour les 12 derniers mois
     today = datetime.now().date()
