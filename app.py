@@ -150,152 +150,6 @@ def dashboard():
                          project_hours=project_hours,
                          user_time_entries=user_time_entries)
 
-@app.route('/entries')
-@login_required
-def view_entries():
-    """Vue des statistiques globales avec recherche et pagination"""
-    from datetime import timedelta
-    
-    # Récupérer les paramètres de recherche et pagination
-    search_project = request.args.get('project', '')
-    search_term = request.args.get('term', '')
-    search_user = request.args.get('user', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Nombre d'entrées par page
-    
-    # Query de base pour toutes les entrées
-    query = TimeEntry.query
-    
-    # Filtrage par projet si spécifié
-    if search_project:
-        query = query.filter(TimeEntry.project_id == search_project)
-    
-    # Filtrage par terme de recherche dans les notes
-    if search_term:
-        query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
-    
-    # Filtrage par utilisateur si spécifié
-    if search_user:
-        query = query.filter(TimeEntry.user_id == search_user)
-    
-    # Pagination des entrées filtrées avec détails
-    entries_pagination = query.join(Project).join(User).order_by(TimeEntry.created_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    filtered_entries = entries_pagination.items
-    
-    # Récupérer tous les projets et utilisateurs pour les filtres
-    projects = Project.query.all()
-    users = User.query.all()
-    
-    # Récupérer toutes les entrées groupées par projet
-    project_stats = db.session.query(
-        Project.name.label('project_name'),
-        func.sum(TimeEntry.hours).label('total_hours'),
-        func.count(TimeEntry.id).label('entry_count')
-    ).join(TimeEntry).group_by(Project.id, Project.name).all()
-    
-    # Récupérer les entrées récentes avec détails
-    all_entries = db.session.query(TimeEntry, Project.name, User.username).join(
-        Project, TimeEntry.project_id == Project.id
-    ).join(
-        User, TimeEntry.user_id == User.id
-    ).order_by(TimeEntry.created_at.desc()).all()
-    
-    # Calcul des heures par projet par mois pour les 12 derniers mois
-    today = datetime.now().date()
-    current_year = today.year
-    current_month = today.month
-    
-    # Calculer l'année et le mois d'il y a 12 mois
-    start_year = current_year
-    start_month = current_month - 11
-    if start_month <= 0:
-        start_month += 12
-        start_year -= 1
-    
-    monthly_project_stats = db.session.query(
-        TimeEntry.year.label('year'),
-        TimeEntry.month.label('month'),
-        Project.name.label('project_name'),
-        func.sum(TimeEntry.hours).label('total_hours')
-    ).join(Project).filter(
-        or_(
-            and_(TimeEntry.year == start_year, TimeEntry.month >= start_month),
-            and_(TimeEntry.year > start_year, TimeEntry.year <= current_year),
-            and_(TimeEntry.year == current_year, TimeEntry.month <= current_month)
-        )
-    ).group_by(
-        TimeEntry.year,
-        TimeEntry.month,
-        Project.id,
-        Project.name
-    ).order_by('year', 'month').all()
-    
-    # Créer la liste des 12 derniers mois avec noms français
-    monthly_labels = []
-    month_names = {
-        1: 'Jan', 2: 'Fév', 3: 'Mar', 4: 'Avr', 5: 'Mai', 6: 'Juin',
-        7: 'Juil', 8: 'Août', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Déc'
-    }
-    
-    iter_year = start_year
-    iter_month = start_month
-    
-    for i in range(12):
-        month_name = f"{month_names[iter_month]} {iter_year}"
-        monthly_labels.append(month_name)
-        
-        # Passer au mois suivant
-        iter_month += 1
-        if iter_month > 12:
-            iter_month = 1
-            iter_year += 1
-    
-    # Organiser les données par projet et par mois
-    projects_monthly_data = {}
-    for stat in project_stats:
-        projects_monthly_data[stat.project_name] = [0] * 12
-    
-    iter_year = start_year
-    iter_month = start_month
-    
-    for month_idx in range(12):
-        month_total = 0
-        month_data = {}
-        
-        # Calculer les heures par projet pour ce mois
-        for stat in monthly_project_stats:
-            if int(stat.year) == iter_year and int(stat.month) == iter_month:
-                month_data[stat.project_name] = float(stat.total_hours)
-                month_total += float(stat.total_hours)
-        
-        # Convertir en pourcentages
-        for project_name in projects_monthly_data:
-            if month_total > 0 and project_name in month_data:
-                percentage = (month_data[project_name] / month_total) * 100
-                projects_monthly_data[project_name][month_idx] = round(percentage, 1)
-        
-        # Passer au mois suivant
-        iter_month += 1
-        if iter_month > 12:
-            iter_month = 1
-            iter_year += 1
-    
-
-    
-    return render_template('entries.html', 
-                         project_stats=project_stats, 
-                         all_entries=filtered_entries,
-                         projects_monthly_data=projects_monthly_data,
-                         monthly_labels=monthly_labels,
-                         projects=projects,
-                         users=users,
-                         search_project=search_project,
-                         search_term=search_term,
-                         search_user=search_user,
-                         pagination=entries_pagination)
-
 @app.route('/log_time', methods=['POST'])
 @login_required
 def log_time():
@@ -958,4 +812,146 @@ def not_found(error):
 def internal_error(error):
     """Gérer les erreurs 500"""
     logger.error(f"Erreur interne du serveur: {str(error)}")
-    return render_template('login.html', error="Erreur interne du serveur"), 500
+    return render_template('login.html', error="Erreur interne du serveur"), 500@app.route('/entries')
+@login_required
+def view_entries():
+    """Vue des statistiques globales avec recherche et pagination"""
+    try:
+        from datetime import timedelta
+        
+        # Récupérer les paramètres de recherche et pagination
+        search_project = request.args.get('project', '')
+        search_term = request.args.get('term', '')
+        search_user = request.args.get('user', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 10  # Nombre d'entrées par page
+        
+        # Query de base pour toutes les entrées
+        query = TimeEntry.query
+        
+        # Filtrage par projet si spécifié
+        if search_project:
+            query = query.filter(TimeEntry.project_id == search_project)
+        
+        # Filtrage par terme de recherche dans les notes
+        if search_term:
+            query = query.filter(TimeEntry.notes.ilike(f'%{search_term}%'))
+        
+        # Filtrage par utilisateur si spécifié
+        if search_user:
+            query = query.filter(TimeEntry.user_id == search_user)
+        
+        # Pagination des entrées filtrées avec détails
+        entries_pagination = query.join(Project).join(User).order_by(TimeEntry.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        filtered_entries = entries_pagination.items
+        
+        # Récupérer tous les projets et utilisateurs pour les filtres
+        projects = Project.query.all()
+        users = User.query.all()
+        
+        # Récupérer toutes les entrées groupées par projet
+        project_stats = db.session.query(
+            Project.name.label('project_name'),
+            func.sum(TimeEntry.hours).label('total_hours'),
+            func.count(TimeEntry.id).label('entry_count')
+        ).join(TimeEntry).group_by(Project.id, Project.name).all()
+        
+        # Calcul des heures par projet par mois pour les 12 derniers mois
+        today = datetime.now().date()
+        current_year = today.year
+        current_month = today.month
+        
+        # Calculer l'année et le mois d'il y a 12 mois
+        start_year = current_year
+        start_month = current_month - 11
+        if start_month <= 0:
+            start_month += 12
+            start_year -= 1
+        
+        monthly_project_stats = db.session.query(
+            TimeEntry.year.label('year'),
+            TimeEntry.month.label('month'),
+            Project.name.label('project_name'),
+            func.sum(TimeEntry.hours).label('total_hours')
+        ).join(Project).filter(
+            or_(
+                and_(TimeEntry.year == start_year, TimeEntry.month >= start_month),
+                and_(TimeEntry.year > start_year, TimeEntry.year <= current_year),
+                and_(TimeEntry.year == current_year, TimeEntry.month <= current_month)
+            )
+        ).group_by(
+            TimeEntry.year,
+            TimeEntry.month,
+            Project.id,
+            Project.name
+        ).order_by('year', 'month').all()
+        
+        # Créer la liste des 12 derniers mois avec noms français
+        monthly_labels = []
+        month_names = {
+            1: 'Jan', 2: 'Fév', 3: 'Mar', 4: 'Avr', 5: 'Mai', 6: 'Juin',
+            7: 'Juil', 8: 'Août', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Déc'
+        }
+        
+        iter_year = start_year
+        iter_month = start_month
+        
+        for i in range(12):
+            month_name = f"{month_names[iter_month]} {iter_year}"
+            monthly_labels.append(month_name)
+            
+            # Passer au mois suivant
+            iter_month += 1
+            if iter_month > 12:
+                iter_month = 1
+                iter_year += 1
+        
+        # Organiser les données par projet et par mois
+        projects_monthly_data = {}
+        for stat in project_stats:
+            projects_monthly_data[stat.project_name] = [0] * 12
+        
+        iter_year = start_year
+        iter_month = start_month
+        
+        for month_idx in range(12):
+            month_total = 0
+            month_data = {}
+            
+            # Calculer les heures par projet pour ce mois
+            for stat in monthly_project_stats:
+                if int(stat.year) == iter_year and int(stat.month) == iter_month:
+                    month_data[stat.project_name] = float(stat.total_hours)
+                    month_total += float(stat.total_hours)
+            
+            # Convertir en pourcentages
+            for project_name in projects_monthly_data:
+                if month_total > 0 and project_name in month_data:
+                    percentage = (month_data[project_name] / month_total) * 100
+                    projects_monthly_data[project_name][month_idx] = round(percentage, 1)
+            
+            # Passer au mois suivant
+            iter_month += 1
+            if iter_month > 12:
+                iter_month = 1
+                iter_year += 1
+
+        
+        return render_template('entries.html', 
+                             project_stats=project_stats, 
+                             all_entries=filtered_entries,
+                             projects_monthly_data=projects_monthly_data,
+                             monthly_labels=monthly_labels,
+                             projects=projects,
+                             users=users,
+                             search_project=search_project,
+                             search_term=search_term,
+                             search_user=search_user,
+                             pagination=entries_pagination)
+    
+    except Exception as e:
+        logger.error(f"Erreur dans view_entries: {str(e)}")
+        flash('Erreur lors du chargement des statistiques.', 'error')
+        return redirect(url_for('dashboard'))
