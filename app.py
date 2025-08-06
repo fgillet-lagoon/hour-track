@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, or_, and_
 from models import db, User, Project, TimeEntry
 
 # Configure logging
@@ -204,49 +204,69 @@ def view_entries():
     
     # Calcul des heures par projet par mois pour les 12 derniers mois
     today = datetime.now().date()
-    twelve_months_ago = today.replace(day=1) - timedelta(days=365)
+    current_year = today.year
+    current_month = today.month
+    
+    # Calculer l'année et le mois d'il y a 12 mois
+    start_year = current_year
+    start_month = current_month - 11
+    if start_month <= 0:
+        start_month += 12
+        start_year -= 1
     
     monthly_project_stats = db.session.query(
-        extract('year', TimeEntry.date).label('year'),
-        extract('month', TimeEntry.date).label('month'),
+        TimeEntry.year.label('year'),
+        TimeEntry.month.label('month'),
         Project.name.label('project_name'),
         func.sum(TimeEntry.hours).label('total_hours')
     ).join(Project).filter(
-        TimeEntry.date >= twelve_months_ago
+        or_(
+            and_(TimeEntry.year == start_year, TimeEntry.month >= start_month),
+            and_(TimeEntry.year > start_year, TimeEntry.year <= current_year),
+            and_(TimeEntry.year == current_year, TimeEntry.month <= current_month)
+        )
     ).group_by(
-        extract('year', TimeEntry.date),
-        extract('month', TimeEntry.date),
+        TimeEntry.year,
+        TimeEntry.month,
         Project.id,
         Project.name
     ).order_by('year', 'month').all()
     
-    # Créer la liste des 12 derniers mois
+    # Créer la liste des 12 derniers mois avec noms français
     monthly_labels = []
-    current_date = twelve_months_ago
+    month_names = {
+        1: 'Jan', 2: 'Fév', 3: 'Mar', 4: 'Avr', 5: 'Mai', 6: 'Juin',
+        7: 'Juil', 8: 'Août', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Déc'
+    }
+    
+    iter_year = start_year
+    iter_month = start_month
     
     for i in range(12):
-        month_name = current_date.strftime('%b %Y')
+        month_name = f"{month_names[iter_month]} {iter_year}"
         monthly_labels.append(month_name)
         
         # Passer au mois suivant
-        if current_date.month == 12:
-            current_date = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            current_date = current_date.replace(month=current_date.month + 1)
+        iter_month += 1
+        if iter_month > 12:
+            iter_month = 1
+            iter_year += 1
     
     # Organiser les données par projet et par mois
     projects_monthly_data = {}
     for stat in project_stats:
         projects_monthly_data[stat.project_name] = [0] * 12
     
-    current_date = twelve_months_ago
+    iter_year = start_year
+    iter_month = start_month
+    
     for month_idx in range(12):
         month_total = 0
         month_data = {}
         
         # Calculer les heures par projet pour ce mois
         for stat in monthly_project_stats:
-            if int(stat.year) == current_date.year and int(stat.month) == current_date.month:
+            if int(stat.year) == iter_year and int(stat.month) == iter_month:
                 month_data[stat.project_name] = float(stat.total_hours)
                 month_total += float(stat.total_hours)
         
@@ -257,10 +277,10 @@ def view_entries():
                 projects_monthly_data[project_name][month_idx] = round(percentage, 1)
         
         # Passer au mois suivant
-        if current_date.month == 12:
-            current_date = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            current_date = current_date.replace(month=current_date.month + 1)
+        iter_month += 1
+        if iter_month > 12:
+            iter_month = 1
+            iter_year += 1
     
 
     
