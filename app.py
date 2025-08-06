@@ -522,7 +522,8 @@ def edit_entry(entry_id):
 @login_required
 def my_entries():
     """Vue personnelle des entrées avec recherche et pagination"""
-    from datetime import timedelta
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
     
     # Récupérer les paramètres de recherche et pagination
     search_project = request.args.get('project', '')
@@ -550,12 +551,67 @@ def my_entries():
     # Récupérer tous les projets pour le filtre
     projects = Project.query.all()
     
+    # Calculer les statistiques pour les graphiques de l'utilisateur connecté
+    user_project_stats = db.session.query(
+        Project.name.label('project_name'),
+        func.sum(TimeEntry.hours).label('total_hours'),
+        func.count(TimeEntry.id).label('entry_count')
+    ).join(TimeEntry).filter(TimeEntry.user_id == current_user.id).group_by(Project.id, Project.name).all()
+    
+    # Données mensuelles pour l'utilisateur connecté (12 derniers mois)
+    user_monthly_labels = []
+    now = datetime.now()
+    for i in range(11, -1, -1):
+        month_date = now - relativedelta(months=i)
+        user_monthly_labels.append(f"{month_date.strftime('%m')}/{month_date.year}")
+    
+    # Récupérer les données mensuelles pour l'utilisateur connecté
+    user_monthly_stats = db.session.query(
+        Project.name.label('project_name'),
+        TimeEntry.month,
+        TimeEntry.year,
+        func.sum(TimeEntry.hours).label('total_hours')
+    ).join(TimeEntry).filter(TimeEntry.user_id == current_user.id).group_by(Project.name, TimeEntry.month, TimeEntry.year).all()
+    
+    # Organiser les données par projet pour les 12 derniers mois
+    user_monthly_data = {}
+    user_monthly_totals = [0] * 12
+    
+    for stat in user_project_stats:
+        user_monthly_data[stat.project_name] = [0] * 12
+    
+    # Remplir les données mensuelles avec les heures brutes
+    for stat in user_monthly_stats:
+        if stat.project_name in user_monthly_data:
+            try:
+                month_key = f"{stat.month:02d}/{stat.year}"
+                if month_key in user_monthly_labels:
+                    month_idx = user_monthly_labels.index(month_key)
+                    hours = float(stat.total_hours)
+                    user_monthly_data[stat.project_name][month_idx] = hours
+                    user_monthly_totals[month_idx] += hours
+            except (ValueError, TypeError):
+                continue
+    
+    # Convertir en pourcentages basés sur le total du mois
+    for project_name in user_monthly_data:
+        for month_idx in range(12):
+            if user_monthly_totals[month_idx] > 0:
+                project_hours = user_monthly_data[project_name][month_idx]
+                percentage = (project_hours / user_monthly_totals[month_idx]) * 100
+                user_monthly_data[project_name][month_idx] = round(percentage, 1)
+            else:
+                user_monthly_data[project_name][month_idx] = 0
+    
     return render_template('my_entries.html', 
                          entries=entries, 
                          projects=projects,
                          search_project=search_project,
                          search_term=search_term,
-                         pagination=entries_pagination)
+                         pagination=entries_pagination,
+                         user_project_stats=user_project_stats,
+                         user_monthly_data=user_monthly_data,
+                         user_monthly_labels=user_monthly_labels)
 
 @app.route('/my_entries/add', methods=['POST'])
 @login_required
@@ -913,6 +969,57 @@ def view_entries():
                     projects_monthly_data[project_name][month_idx] = round(percentage, 1)
                 else:
                     projects_monthly_data[project_name][month_idx] = 0
+        
+        # Filtrer les graphiques par utilisateur si spécifié
+        if search_user:
+            # Filtrer project_stats pour l'utilisateur sélectionné
+            filtered_project_stats = db.session.query(
+                Project.name.label('project_name'),
+                func.sum(TimeEntry.hours).label('total_hours'),
+                func.count(TimeEntry.id).label('entry_count')
+            ).join(TimeEntry).filter(TimeEntry.user_id == search_user).group_by(Project.id, Project.name).all()
+            
+            # Recalculer les données mensuelles pour cet utilisateur
+            filtered_monthly_stats = db.session.query(
+                Project.name.label('project_name'),
+                TimeEntry.month,
+                TimeEntry.year,
+                func.sum(TimeEntry.hours).label('total_hours')
+            ).join(TimeEntry).filter(TimeEntry.user_id == search_user).group_by(Project.name, TimeEntry.month, TimeEntry.year).all()
+            
+            # Réinitialiser les données pour l'utilisateur filtré
+            filtered_monthly_data = {}
+            filtered_monthly_totals = [0] * 12
+            
+            for stat in filtered_project_stats:
+                filtered_monthly_data[stat.project_name] = [0] * 12
+            
+            # Remplir avec les données de l'utilisateur filtré
+            for stat in filtered_monthly_stats:
+                if stat.project_name in filtered_monthly_data:
+                    try:
+                        month_key = f"{stat.month:02d}/{stat.year}"
+                        if month_key in monthly_labels:
+                            month_idx = monthly_labels.index(month_key)
+                            hours = float(stat.total_hours)
+                            filtered_monthly_data[stat.project_name][month_idx] = hours
+                            filtered_monthly_totals[month_idx] += hours
+                    except (ValueError, TypeError):
+                        continue
+            
+            # Convertir en pourcentages pour l'utilisateur filtré
+            for project_name in filtered_monthly_data:
+                for month_idx in range(12):
+                    if filtered_monthly_totals[month_idx] > 0:
+                        project_hours = filtered_monthly_data[project_name][month_idx]
+                        percentage = (project_hours / filtered_monthly_totals[month_idx]) * 100
+                        filtered_monthly_data[project_name][month_idx] = round(percentage, 1)
+                    else:
+                        filtered_monthly_data[project_name][month_idx] = 0
+            
+            # Utiliser les données filtrées
+            project_stats = filtered_project_stats
+            projects_monthly_data = filtered_monthly_data
         
         # Utiliser la vraie pagination
         pagination = entries_pagination

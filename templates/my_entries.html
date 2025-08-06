@@ -68,6 +68,38 @@
     </div>
 </div>
 
+<!-- Graphiques des statistiques personnelles -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Mes Heures par Projet
+                </h5>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="myHoursChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-month me-2"></i>Ma Répartition Mensuelle (12 derniers mois)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <canvas id="myMonthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filtres de recherche -->
 <div class="row mb-4">
     <div class="col-12">
@@ -296,6 +328,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Définir la date d'aujourd'hui pour le formulaire
 document.addEventListener('DOMContentLoaded', function() {
@@ -303,6 +336,148 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dateInput && !dateInput.value) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.value = today;
+    }
+    
+    // Données pour les graphiques personnels
+    var userProjectLabels = {{ user_project_stats | map(attribute='project_name') | list | tojson }};
+    var userProjectData = {{ user_project_stats | map(attribute='total_hours') | list | tojson }};
+    var userMonthlyLabels = {{ user_monthly_labels | tojson }};
+    var userMonthlyData = {{ user_monthly_data | tojson }};
+
+    // Palette de couleurs
+    var colorPalette = [
+        'rgba(37, 99, 235, 0.8)',
+        'rgba(234, 88, 12, 0.8)', 
+        'rgba(34, 197, 94, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(168, 85, 247, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(14, 165, 233, 0.8)'
+    ];
+
+    // Graphique en camembert pour mes heures par projet
+    if (document.getElementById('myHoursChart')) {
+        var myHoursCtx = document.getElementById('myHoursChart').getContext('2d');
+        new Chart(myHoursCtx, {
+            type: 'doughnut',
+            data: {
+                labels: userProjectLabels,
+                datasets: [{
+                    data: userProjectData,
+                    backgroundColor: colorPalette.slice(0, userProjectLabels.length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            color: '#fff'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + 'h (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Graphique en barres empilées pour ma répartition mensuelle
+    if (document.getElementById('myMonthlyChart')) {
+        var myMonthlyCtx = document.getElementById('myMonthlyChart').getContext('2d');
+        var monthlyDatasets = [];
+
+        // Créer un dataset pour chaque projet
+        var projectIndex = 0;
+        for (var projectName in userMonthlyData) {
+            monthlyDatasets.push({
+                label: projectName,
+                data: userMonthlyData[projectName],
+                backgroundColor: colorPalette[projectIndex % colorPalette.length],
+                borderWidth: 1,
+                borderColor: '#fff'
+            });
+            projectIndex++;
+        }
+
+        new Chart(myMonthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: userMonthlyLabels,
+                datasets: monthlyDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: {
+                            color: '#fff'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#fff',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            color: '#fff'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '%';
+                            },
+                            footer: function(tooltipItems) {
+                                if (tooltipItems.length > 0) {
+                                    var monthIndex = tooltipItems[0].dataIndex;
+                                    var totalPercentage = 0;
+                                    for (var i = 0; i < tooltipItems.length; i++) {
+                                        totalPercentage += tooltipItems[i].parsed.y;
+                                    }
+                                    return 'Total: ' + totalPercentage.toFixed(1) + '%';
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 });
 </script>
