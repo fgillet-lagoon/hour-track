@@ -31,7 +31,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('add_my_entry') }}" class="row g-3">
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-4 col-md-6">
                         <label for="project_id" class="form-label">Projet</label>
                         <select class="form-select" id="project_id" name="project_id" required>
                             <option value="">Sélectionner un projet</option>
@@ -43,17 +43,13 @@
                     <div class="col-lg-2 col-md-6">
                         <label for="hours" class="form-label">Heures</label>
                         <input type="number" class="form-control" id="hours" name="hours" 
-                               step="0.25" min="0.25" placeholder="8.0" required>
+                               step="0.25" min="0.25" placeholder="40.0" required>
                         <small class="form-text text-muted">Pas de limite</small>
                     </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label for="start_date" class="form-label">Date début</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" required>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label for="end_date" class="form-label">Date fin</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date">
-                        <small class="form-text text-muted">Optionnel</small>
+                    <div class="col-lg-3 col-md-8">
+                        <label for="month_year" class="form-label">Mois</label>
+                        <input type="month" class="form-control" id="month_year" name="month_year" required>
+                        <small class="form-text text-muted">Sélectionner le mois</small>
                     </div>
                     <div class="col-lg-2 col-md-8">
                         <label for="notes" class="form-label">Notes</label>
@@ -142,22 +138,20 @@
                             {% for entry in entries %}
                             <tr>
                                 <td>
-                                    <strong>{{ entry.get_display_date() if entry.start_date else entry.date.strftime('%d/%m/%Y') }}</strong>
-                                    <br><small class="text-muted">
-                                        {% if entry.start_date %}
-                                            {{ entry.start_date.strftime('%A') }}
-                                        {% else %}
-                                            {{ entry.date.strftime('%A') }}
-                                        {% endif %}
-                                    </small>
+                                    <strong>{{ entry.get_display_date() }}</strong>
+                                    {% if entry.month and entry.year %}
+                                        <br><small class="text-muted">
+                                            <i class="bi bi-calendar-month"></i> Mois complet
+                                        </small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <span class="badge bg-lagoon">{{ entry.project.name }}</span>
                                 </td>
                                 <td>
                                     <span class="fw-bold text-success">{{ entry.hours }}h</span>
-                                    {% if entry.hours > 24 %}
-                                        <br><small class="text-info">+ de 24h</small>
+                                    {% if entry.hours > 40 %}
+                                        <br><small class="text-info">+ de 40h</small>
                                     {% endif %}
                                 </td>
                                 <td>

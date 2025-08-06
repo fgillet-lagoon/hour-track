@@ -133,14 +133,12 @@
                             {% for entry in all_entries %}
                             <tr>
                                 <td>
-                                    <strong>{{ entry.get_display_date() if entry.start_date else entry.date.strftime('%d/%m/%Y') }}</strong>
-                                    <br><small class="text-muted">
-                                        {% if entry.start_date %}
-                                            {{ entry.start_date.strftime('%A') }}
-                                        {% else %}
-                                            {{ entry.date.strftime('%A') }}
-                                        {% endif %}
-                                    </small>
+                                    <strong>{{ entry.get_display_date() }}</strong>
+                                    {% if entry.month and entry.year %}
+                                        <br><small class="text-muted">
+                                            <i class="bi bi-calendar-month"></i> Mois complet
+                                        </small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary">{{ entry.user.username }}</span>
@@ -150,8 +148,8 @@
                                 </td>
                                 <td>
                                     <span class="fw-bold text-success">{{ entry.hours }}h</span>
-                                    {% if entry.hours > 24 %}
-                                        <br><small class="text-info">+ de 24h</small>
+                                    {% if entry.hours > 40 %}
+                                        <br><small class="text-info">+ de 40h</small>
                                     {% endif %}
                                 </td>
                                 <td>

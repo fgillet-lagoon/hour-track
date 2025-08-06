@@ -31,7 +31,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('log_time') }}" class="row g-3">
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-4 col-md-6">
                         <label for="project_id" class="form-label">Projet</label>
                         <select class="form-select" id="project_id" name="project_id" required>
                             <option value="">Sélectionner un projet</option>
@@ -43,17 +43,13 @@
                     <div class="col-lg-2 col-md-6">
                         <label for="hours" class="form-label">Heures</label>
                         <input type="number" class="form-control" id="hours" name="hours" 
-                               step="0.25" min="0.25" placeholder="8.0" required>
-                        <small class="form-text text-muted">Pas de limite à 24h</small>
+                               step="0.25" min="0.25" placeholder="40.0" required>
+                        <small class="form-text text-muted">Pas de limite</small>
                     </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label for="start_date" class="form-label">Date de début</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" required>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label for="end_date" class="form-label">Date de fin</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date">
-                        <small class="form-text text-muted">Optionnel</small>
+                    <div class="col-lg-3 col-md-8">
+                        <label for="month_year" class="form-label">Mois</label>
+                        <input type="month" class="form-control" id="month_year" name="month_year" required>
+                        <small class="form-text text-muted">Sélectionner le mois</small>
                     </div>
                     <div class="col-lg-2 col-md-8">
                         <label for="notes" class="form-label">Notes</label>

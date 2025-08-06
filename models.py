@@ -52,16 +52,29 @@ class TimeEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     hours = db.Column(db.Float, nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=True)  # Optional end date
-    # Keep old date field for backwards compatibility
+    month = db.Column(db.Integer, nullable=False)  # 1-12
+    year = db.Column(db.Integer, nullable=False)   # 2024, 2025, etc.
+    # Keep old fields for backwards compatibility
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
     date = db.Column(db.Date, nullable=True)
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    def get_display_month(self):
+        """Get the month display in French"""
+        months = {
+            1: 'Janvier', 2: 'Février', 3: 'Mars', 4: 'Avril',
+            5: 'Mai', 6: 'Juin', 7: 'Juillet', 8: 'Août',
+            9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
+        }
+        return f"{months.get(self.month, 'Inconnu')} {self.year}"
+    
     def get_display_date(self):
-        """Get the appropriate date for display"""
-        if self.start_date:
+        """Get the appropriate date for display - prefer month/year if available"""
+        if self.month and self.year:
+            return self.get_display_month()
+        elif self.start_date:
             if self.end_date and self.end_date != self.start_date:
                 return f"{self.start_date.strftime('%d/%m/%Y')} - {self.end_date.strftime('%d/%m/%Y')}"
             else:

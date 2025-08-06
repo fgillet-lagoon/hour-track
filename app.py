@@ -287,34 +287,24 @@ def log_time():
             return redirect(url_for('dashboard'))
         project_id = int(project_id_str)
         hours = float(request.form.get('hours', 0))
-        start_date_str = request.form.get('start_date')
-        end_date_str = request.form.get('end_date')  # Optional
+        month_year = request.form.get('month_year')  # Format: "2025-01" (année-mois)
         notes = request.form.get('notes', '')
         
         # Validate input - hours can be more than 24 now
-        if not project_id or hours <= 0 or not start_date_str:
-            flash('Veuillez fournir un projet, des heures (> 0) et une date de début valides.', 'error')
+        if not project_id or hours <= 0 or not month_year:
+            flash('Veuillez fournir un projet, des heures (> 0) et un mois valides.', 'error')
             return redirect(url_for('dashboard'))
         
-        # Parse start date
+        # Parse month and year
         try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('Format de date de début invalide.', 'error')
+            year_str, month_str = month_year.split('-')
+            year = int(year_str)
+            month = int(month_str)
+            if month < 1 or month > 12:
+                raise ValueError("Mois invalide")
+        except (ValueError, IndexError):
+            flash('Format de mois invalide.', 'error')
             return redirect(url_for('dashboard'))
-        
-        # Parse end date if provided
-        end_date = None
-        if end_date_str:
-            try:
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                # Validate that end_date is not before start_date
-                if end_date < start_date:
-                    flash('La date de fin ne peut pas être antérieure à la date de début.', 'error')
-                    return redirect(url_for('dashboard'))
-            except ValueError:
-                flash('Format de date de fin invalide.', 'error')
-                return redirect(url_for('dashboard'))
         
         # Check if project exists
         project = Project.query.get(project_id)
@@ -327,18 +317,16 @@ def log_time():
         time_entry.user_id = current_user.id
         time_entry.project_id = project_id
         time_entry.hours = hours
-        time_entry.start_date = start_date
-        time_entry.end_date = end_date
-        # Keep backwards compatibility with old date field
-        time_entry.date = start_date
+        time_entry.month = month
+        time_entry.year = year
         time_entry.notes = notes
         
         db.session.add(time_entry)
         db.session.commit()
         
-        # Better success message showing the date range
-        date_display = time_entry.get_display_date()
-        flash(f'{hours} heures enregistrées avec succès pour {date_display} !', 'success')
+        # Success message showing the month
+        month_display = time_entry.get_display_month()
+        flash(f'{hours} heures enregistrées avec succès pour {month_display} !', 'success')
         
     except ValueError:
         flash('Veuillez entrer un nombre d\'heures valide.', 'error')
@@ -701,13 +689,12 @@ def add_my_entry():
     try:
         project_id = request.form.get('project_id')
         hours = request.form.get('hours')
-        start_date_str = request.form.get('start_date')
-        end_date_str = request.form.get('end_date')
+        month_year = request.form.get('month_year')
         notes = request.form.get('notes', '').strip()
         
         # Validation
-        if not project_id or not hours or not start_date_str:
-            flash('Le projet, les heures et la date de début sont obligatoires.', 'error')
+        if not project_id or not hours or not month_year:
+            flash('Le projet, les heures et le mois sont obligatoires.', 'error')
             return redirect(url_for('my_entries'))
         
         # Validation du projet
@@ -726,42 +713,32 @@ def add_my_entry():
             flash('Nombre d\'heures invalide.', 'error')
             return redirect(url_for('my_entries'))
         
-        # Validation de la date de début
+        # Parse month and year
         try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('Format de date de début invalide.', 'error')
+            year_str, month_str = month_year.split('-')
+            year = int(year_str)
+            month = int(month_str)
+            if month < 1 or month > 12:
+                raise ValueError("Mois invalide")
+        except (ValueError, IndexError):
+            flash('Format de mois invalide.', 'error')
             return redirect(url_for('my_entries'))
-        
-        # Validation de la date de fin si fournie
-        end_date = None
-        if end_date_str:
-            try:
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                if end_date < start_date:
-                    flash('La date de fin ne peut pas être antérieure à la date de début.', 'error')
-                    return redirect(url_for('my_entries'))
-            except ValueError:
-                flash('Format de date de fin invalide.', 'error')
-                return redirect(url_for('my_entries'))
         
         # Créer l'entrée
         entry = TimeEntry()
         entry.user_id = current_user.id
         entry.project_id = project_id
         entry.hours = hours_float
-        entry.start_date = start_date
-        entry.end_date = end_date
-        # Backwards compatibility
-        entry.date = start_date
+        entry.month = month
+        entry.year = year
         entry.notes = notes
         
         db.session.add(entry)
         db.session.commit()
         
-        # Better success message with date display
-        date_display = entry.get_display_date()
-        flash(f'Entrée ajoutée: {hours_float}h sur {project.name} ({date_display})', 'success')
+        # Success message with month display
+        month_display = entry.get_display_month()
+        flash(f'Entrée ajoutée: {hours_float}h sur {project.name} ({month_display})', 'success')
         
     except Exception as e:
         logger.error(f"Erreur lors de l'ajout de l'entrée: {str(e)}")
@@ -785,13 +762,12 @@ def edit_my_entry(entry_id):
         try:
             project_id = request.form.get('project_id')
             hours = request.form.get('hours')
-            start_date_str = request.form.get('start_date')
-            end_date_str = request.form.get('end_date')
+            month_year = request.form.get('month_year')
             notes = request.form.get('notes', '').strip()
             
             # Validation
-            if not project_id or not hours or not start_date_str:
-                flash('Le projet, les heures et la date de début sont obligatoires.', 'error')
+            if not project_id or not hours or not month_year:
+                flash('Le projet, les heures et le mois sont obligatoires.', 'error')
                 return redirect(url_for('edit_my_entry', entry_id=entry_id))
             
             # Validation du projet
@@ -800,7 +776,7 @@ def edit_my_entry(entry_id):
                 flash('Projet invalide.', 'error')
                 return redirect(url_for('edit_my_entry', entry_id=entry_id))
             
-            # Validation des heures - pas de limite à 24h
+            # Validation des heures - pas de limite
             try:
                 hours_float = float(hours)
                 if hours_float <= 0:
@@ -810,32 +786,22 @@ def edit_my_entry(entry_id):
                 flash('Nombre d\'heures invalide.', 'error')
                 return redirect(url_for('edit_my_entry', entry_id=entry_id))
             
-            # Validation de la date de début
+            # Parse month and year
             try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                flash('Format de date de début invalide.', 'error')
+                year_str, month_str = month_year.split('-')
+                year = int(year_str)
+                month = int(month_str)
+                if month < 1 or month > 12:
+                    raise ValueError("Mois invalide")
+            except (ValueError, IndexError):
+                flash('Format de mois invalide.', 'error')
                 return redirect(url_for('edit_my_entry', entry_id=entry_id))
-            
-            # Validation de la date de fin si fournie
-            end_date = None
-            if end_date_str:
-                try:
-                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                    if end_date < start_date:
-                        flash('La date de fin ne peut pas être antérieure à la date de début.', 'error')
-                        return redirect(url_for('edit_my_entry', entry_id=entry_id))
-                except ValueError:
-                    flash('Format de date de fin invalide.', 'error')
-                    return redirect(url_for('edit_my_entry', entry_id=entry_id))
             
             # Mettre à jour l'entrée
             entry.project_id = project_id
             entry.hours = hours_float
-            entry.start_date = start_date
-            entry.end_date = end_date
-            # Backwards compatibility
-            entry.date = start_date
+            entry.month = month
+            entry.year = year
             entry.notes = notes
             
             db.session.commit()
