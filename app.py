@@ -917,3 +917,192 @@ def view_entries():
     except Exception as e:
         logger.error(f"Erreur dans view_entries: {str(e)}")
         return f"Erreur: {str(e)}", 500
+
+@app.route('/export/csv')
+@login_required
+def export_csv():
+    """Export des données en CSV"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import Response
+        
+        # Récupérer les paramètres de filtrage
+        project_filter = request.args.get('project', '')
+        user_filter = request.args.get('user', '')
+        term_filter = request.args.get('term', '')
+        
+        # Query de base
+        query = TimeEntry.query.join(Project).join(User)
+        
+        # Appliquer les filtres
+        if project_filter:
+            query = query.filter(TimeEntry.project_id == project_filter)
+        if user_filter:
+            query = query.filter(TimeEntry.user_id == user_filter)
+        if term_filter:
+            query = query.filter(TimeEntry.notes.ilike(f'%{term_filter}%'))
+        
+        # Récupérer toutes les entrées
+        entries = query.order_by(TimeEntry.created_at.desc()).all()
+        
+        # Créer le CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # En-têtes
+        writer.writerow(['Date', 'Mois', 'Année', 'Projet', 'Utilisateur', 'Heures', 'Notes', 'Créé le'])
+        
+        # Données
+        for entry in entries:
+            writer.writerow([
+                f"{entry.month:02d}/{entry.year}" if entry.month and entry.year else 'N/A',
+                entry.month or 'N/A',
+                entry.year or 'N/A',
+                entry.project.name if entry.project else 'N/A',
+                entry.user.username if entry.user else 'N/A',
+                entry.hours,
+                entry.notes or '',
+                entry.created_at.strftime('%d/%m/%Y %H:%M') if entry.created_at else 'N/A'
+            ])
+        
+        # Préparer la réponse
+        output.seek(0)
+        from datetime import datetime
+        filename = f"rapport_temps_lagoon_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+        
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'export CSV: {str(e)}")
+        flash('Erreur lors de l\'export CSV.', 'error')
+        return redirect(url_for('view_entries'))
+
+@app.route('/export/summary')
+@login_required
+def export_summary():
+    """Export d'un résumé par projet en CSV"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import Response
+        
+        # Récupérer les statistiques par projet
+        project_stats = db.session.query(
+            Project.name.label('project_name'),
+            func.sum(TimeEntry.hours).label('total_hours'),
+            func.count(TimeEntry.id).label('entry_count'),
+            func.avg(TimeEntry.hours).label('avg_hours'),
+            func.min(TimeEntry.created_at).label('first_entry'),
+            func.max(TimeEntry.created_at).label('last_entry')
+        ).join(TimeEntry).group_by(Project.id, Project.name).all()
+        
+        # Créer le CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # En-têtes
+        writer.writerow([
+            'Projet', 
+            'Heures Totales', 
+            'Nombre d\'Entrées', 
+            'Heures Moyennes',
+            'Première Entrée',
+            'Dernière Entrée'
+        ])
+        
+        # Données
+        for stat in project_stats:
+            writer.writerow([
+                stat.project_name,
+                f"{stat.total_hours:.1f}",
+                stat.entry_count,
+                f"{stat.avg_hours:.1f}" if stat.avg_hours else '0',
+                stat.first_entry.strftime('%d/%m/%Y') if stat.first_entry else 'N/A',
+                stat.last_entry.strftime('%d/%m/%Y') if stat.last_entry else 'N/A'
+            ])
+        
+        # Préparer la réponse
+        output.seek(0)
+        from datetime import datetime
+        filename = f"resume_projets_lagoon_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+        
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'export résumé: {str(e)}")
+        flash('Erreur lors de l\'export du résumé.', 'error')
+        return redirect(url_for('view_entries'))
+
+@app.route('/export/my_entries')
+@login_required
+def export_my_entries():
+    """Export des entrées personnelles de l'utilisateur connecté en CSV"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import Response
+        from datetime import datetime
+        
+        # Récupérer les paramètres de filtrage
+        project_filter = request.args.get('project', '')
+        term_filter = request.args.get('term', '')
+        
+        # Query de base pour les entrées de l'utilisateur connecté
+        query = TimeEntry.query.filter(TimeEntry.user_id == current_user.id).join(Project)
+        
+        # Appliquer les filtres
+        if project_filter:
+            query = query.filter(TimeEntry.project_id == project_filter)
+        if term_filter:
+            query = query.filter(TimeEntry.notes.ilike(f'%{term_filter}%'))
+        
+        # Récupérer toutes les entrées
+        entries = query.order_by(TimeEntry.created_at.desc()).all()
+        
+        # Créer le CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # En-têtes
+        writer.writerow(['Date', 'Mois', 'Année', 'Projet', 'Heures', 'Notes', 'Créé le'])
+        
+        # Données
+        total_hours = 0
+        for entry in entries:
+            total_hours += entry.hours
+            writer.writerow([
+                f"{entry.month:02d}/{entry.year}" if entry.month and entry.year else 'N/A',
+                entry.month or 'N/A',
+                entry.year or 'N/A',
+                entry.project.name if entry.project else 'N/A',
+                entry.hours,
+                entry.notes or '',
+                entry.created_at.strftime('%d/%m/%Y %H:%M') if entry.created_at else 'N/A'
+            ])
+        
+        # Ajouter une ligne de total
+        writer.writerow(['', '', '', 'TOTAL', f'{total_hours:.1f}', '', ''])
+        
+        # Préparer la réponse
+        output.seek(0)
+        filename = f"mes_entrees_lagoon_{current_user.username}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+        
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'export de mes entrées: {str(e)}")
+        flash('Erreur lors de l\'export de vos entrées.', 'error')
+        return redirect(url_for('my_entries'))

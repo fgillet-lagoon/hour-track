@@ -96,6 +96,24 @@
                         </button>
                     </div>
                 </form>
+                
+                <!-- Boutons d'export -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{{ url_for('export_csv', project=search_project, user=search_user, term=search_term) }}" 
+                               class="btn btn-outline-success">
+                                <i class="bi bi-file-earmark-csv me-1"></i>Exporter CSV (Détaillé)
+                            </a>
+                            <a href="{{ url_for('export_summary') }}" 
+                               class="btn btn-outline-info">
+                                <i class="bi bi-file-earmark-bar-graph me-1"></i>Exporter CSV (Résumé)
+                            </a>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            L'export détaillé utilise les filtres de recherche appliqués. L'export résumé contient les statistiques globales par projet.
+                        </small>
+                    </div>
             </div>
         </div>
     </div>
