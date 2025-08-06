@@ -821,11 +821,23 @@ def view_entries():
     try:
         logger.info("Début de view_entries")
         
-        # Version ultra-simple - juste quelques variables vides
-        projects = []
-        users = []
-        time_entries = []
-        project_stats = []
+        # Récupérer les données réelles mais de manière optimisée
+        projects = Project.query.all()
+        users = User.query.all()
+        
+        # Dernières 20 entrées avec leurs relations
+        time_entries = db.session.query(TimeEntry).options(
+            db.joinedload(TimeEntry.project),
+            db.joinedload(TimeEntry.user)
+        ).order_by(TimeEntry.created_at.desc()).limit(20).all()
+        
+        # Stats basiques par projet
+        project_stats = db.session.query(
+            Project.name.label('project_name'),
+            func.sum(TimeEntry.hours).label('total_hours'),
+            func.count(TimeEntry.id).label('entry_count')
+        ).join(TimeEntry).group_by(Project.id, Project.name).all()
+        
         projects_monthly_data = {}
         monthly_labels = []
         
