@@ -819,12 +819,14 @@ def internal_error(error):
 def view_entries():
     """Vue des statistiques globales avec recherche et pagination"""
     try:
+        from datetime import timedelta
+        
         # Récupérer les paramètres de recherche et pagination
         search_project = request.args.get('project', '')
         search_term = request.args.get('term', '')
         search_user = request.args.get('user', '')
         page = request.args.get('page', 1, type=int)
-        per_page = 10
+        per_page = 10  # Nombre d'entrées par page
         
         # Query de base pour toutes les entrées
         query = TimeEntry.query
@@ -858,9 +860,86 @@ def view_entries():
             func.count(TimeEntry.id).label('entry_count')
         ).join(TimeEntry).group_by(Project.id, Project.name).all()
         
-        # Données pour les graphiques - version simplifiée
-        projects_monthly_data = {}
+        # Calcul des heures par projet par mois pour les 12 derniers mois
+        today = datetime.now().date()
+        current_year = today.year
+        current_month = today.month
+        
+        # Calculer l'année et le mois d'il y a 12 mois
+        start_year = current_year
+        start_month = current_month - 11
+        if start_month <= 0:
+            start_month += 12
+            start_year -= 1
+        
+        monthly_project_stats = db.session.query(
+            TimeEntry.year.label('year'),
+            TimeEntry.month.label('month'),
+            Project.name.label('project_name'),
+            func.sum(TimeEntry.hours).label('total_hours')
+        ).join(Project).filter(
+            or_(
+                and_(TimeEntry.year == start_year, TimeEntry.month >= start_month),
+                and_(TimeEntry.year > start_year, TimeEntry.year <= current_year),
+                and_(TimeEntry.year == current_year, TimeEntry.month <= current_month)
+            )
+        ).group_by(
+            TimeEntry.year,
+            TimeEntry.month,
+            Project.id,
+            Project.name
+        ).order_by('year', 'month').all()
+        
+        # Créer la liste des 12 derniers mois avec noms français
         monthly_labels = []
+        month_names = {
+            1: 'Jan', 2: 'Fév', 3: 'Mar', 4: 'Avr', 5: 'Mai', 6: 'Juin',
+            7: 'Juil', 8: 'Août', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Déc'
+        }
+        
+        iter_year = start_year
+        iter_month = start_month
+        
+        for i in range(12):
+            month_name = f"{month_names[iter_month]} {iter_year}"
+            monthly_labels.append(month_name)
+            
+            # Passer au mois suivant
+            iter_month += 1
+            if iter_month > 12:
+                iter_month = 1
+                iter_year += 1
+        
+        # Organiser les données par projet et par mois
+        projects_monthly_data = {}
+        for stat in project_stats:
+            projects_monthly_data[stat.project_name] = [0] * 12
+        
+        iter_year = start_year
+        iter_month = start_month
+        
+        for month_idx in range(12):
+            month_total = 0
+            month_data = {}
+            
+            # Calculer les heures par projet pour ce mois
+            for stat in monthly_project_stats:
+                if int(stat.year) == iter_year and int(stat.month) == iter_month:
+                    month_data[stat.project_name] = float(stat.total_hours)
+                    month_total += float(stat.total_hours)
+            
+            # Convertir en pourcentages
+            for project_name in projects_monthly_data:
+                if month_total > 0 and project_name in month_data:
+                    percentage = (month_data[project_name] / month_total) * 100
+                    projects_monthly_data[project_name][month_idx] = round(percentage, 1)
+            
+            # Passer au mois suivant
+            iter_month += 1
+            if iter_month > 12:
+                iter_month = 1
+                iter_year += 1
+
         
         return render_template('entries.html', 
                              project_stats=project_stats, 
