@@ -191,3 +191,77 @@ main {
     border-color: rgba(255, 255, 255, 0.2);
     color: var(--lagoon-blue);
 }
+
+/* Border-radius uniforme pour tous les boutons d'action */
+.btn, 
+.btn-primary, 
+.btn-secondary, 
+.btn-success, 
+.btn-danger, 
+.btn-warning, 
+.btn-info, 
+.btn-light, 
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark {
+    border-radius: 8px !important;
+}
+
+/* Border-radius uniforme pour le bouton lagoon existant */
+.btn-lagoon {
+    border-radius: 8px !important;
+}
+
+/* Border-radius pour les éléments de formulaire pour cohérence */
+.form-control,
+.form-select {
+    border-radius: 8px !important;
+}
+
+/* Border-radius pour les cartes */
+.card {
+    border-radius: 12px !important;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Border-radius pour les badges et alertes */
+.badge {
+    border-radius: 6px !important;
+}
+
+.alert {
+    border-radius: 10px !important;
+}
+
+/* Border-radius pour les modales */
+.modal-content {
+    border-radius: 12px !important;
+}
+
+.modal-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Border-radius pour la pagination */
+.page-link {
+    border-radius: 6px !important;
+}
+
+/* Border-radius pour les dropdowns */
+.dropdown-menu {
+    border-radius: 8px !important;
+}
+
+/* Border-radius pour les input groups */
+.input-group-text {
+    border-radius: 8px !important;
+}
