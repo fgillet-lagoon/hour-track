@@ -31,12 +31,30 @@
                                 <label for="hours" class="form-label">Heures</label>
                                 <input type="number" class="form-control" id="hours" name="hours" 
                                        step="0.25" min="0.25" value="{{ entry.hours }}" required>
+                                <small class="form-text text-muted">Pas de limite à 24h</small>
                             </div>
                             
                             <div class="col-md-3 mb-3">
-                                <label for="date" class="form-label">Date</label>
-                                <input type="date" class="form-control" id="date" name="date" 
-                                       value="{{ entry.date.strftime('%Y-%m-%d') }}" required>
+                                <label for="start_date" class="form-label">Date de début</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                       value="{{ entry.start_date.strftime('%Y-%m-%d') if entry.start_date else entry.date.strftime('%Y-%m-%d') }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="end_date" class="form-label">Date de fin</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" 
+                                       value="{{ entry.end_date.strftime('%Y-%m-%d') if entry.end_date else '' }}">
+                                <small class="form-text text-muted">Optionnel - Laissez vide pour une date unique</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="alert alert-info">
+                                    <small>
+                                        <i class="bi bi-info-circle"></i> 
+                                        Date actuelle: {{ entry.get_display_date() if entry.start_date else entry.date.strftime('%d/%m/%Y') }}
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         

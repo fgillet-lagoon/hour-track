@@ -133,8 +133,14 @@
                             {% for entry in all_entries %}
                             <tr>
                                 <td>
-                                    <strong>{{ entry.date.strftime('%d/%m/%Y') }}</strong>
-                                    <br><small class="text-muted">{{ entry.date.strftime('%A') }}</small>
+                                    <strong>{{ entry.get_display_date() if entry.start_date else entry.date.strftime('%d/%m/%Y') }}</strong>
+                                    <br><small class="text-muted">
+                                        {% if entry.start_date %}
+                                            {{ entry.start_date.strftime('%A') }}
+                                        {% else %}
+                                            {{ entry.date.strftime('%A') }}
+                                        {% endif %}
+                                    </small>
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary">{{ entry.user.username }}</span>
@@ -144,6 +150,9 @@
                                 </td>
                                 <td>
                                     <span class="fw-bold text-success">{{ entry.hours }}h</span>
+                                    {% if entry.hours > 24 %}
+                                        <br><small class="text-info">+ de 24h</small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if entry.notes %}

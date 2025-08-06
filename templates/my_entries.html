@@ -31,7 +31,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('add_my_entry') }}" class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-lg-3 col-md-6">
                         <label for="project_id" class="form-label">Projet</label>
                         <select class="form-select" id="project_id" name="project_id" required>
                             <option value="">Sélectionner un projet</option>
@@ -40,23 +40,30 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-6">
                         <label for="hours" class="form-label">Heures</label>
                         <input type="number" class="form-control" id="hours" name="hours" 
-                               step="0.25" min="0.25" required>
+                               step="0.25" min="0.25" placeholder="8.0" required>
+                        <small class="form-text text-muted">Pas de limite</small>
                     </div>
-                    <div class="col-md-2">
-                        <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" required>
+                    <div class="col-lg-2 col-md-6">
+                        <label for="start_date" class="form-label">Date début</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" required>
                     </div>
-                    <div class="col-md-3">
-                        <label for="notes" class="form-label">Notes (optionnel)</label>
+                    <div class="col-lg-2 col-md-6">
+                        <label for="end_date" class="form-label">Date fin</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date">
+                        <small class="form-text text-muted">Optionnel</small>
+                    </div>
+                    <div class="col-lg-2 col-md-8">
+                        <label for="notes" class="form-label">Notes</label>
                         <input type="text" class="form-control" id="notes" name="notes" 
-                               placeholder="Description du travail...">
+                               placeholder="Description...">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
+                    <div class="col-lg-1 col-md-4 d-flex align-items-end">
                         <button type="submit" class="btn btn-lagoon w-100">
-                            <i class="bi bi-plus-circle me-1"></i>Ajouter
+                            <i class="bi bi-plus-circle me-1"></i>
+                            <span class="d-none d-lg-inline">Ajouter</span>
                         </button>
                     </div>
                 </form>
@@ -135,14 +142,23 @@
                             {% for entry in entries %}
                             <tr>
                                 <td>
-                                    <strong>{{ entry.date.strftime('%d/%m/%Y') }}</strong>
-                                    <br><small class="text-muted">{{ entry.date.strftime('%A') }}</small>
+                                    <strong>{{ entry.get_display_date() if entry.start_date else entry.date.strftime('%d/%m/%Y') }}</strong>
+                                    <br><small class="text-muted">
+                                        {% if entry.start_date %}
+                                            {{ entry.start_date.strftime('%A') }}
+                                        {% else %}
+                                            {{ entry.date.strftime('%A') }}
+                                        {% endif %}
+                                    </small>
                                 </td>
                                 <td>
                                     <span class="badge bg-lagoon">{{ entry.project.name }}</span>
                                 </td>
                                 <td>
                                     <span class="fw-bold text-success">{{ entry.hours }}h</span>
+                                    {% if entry.hours > 24 %}
+                                        <br><small class="text-info">+ de 24h</small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if entry.notes %}

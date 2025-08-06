@@ -52,9 +52,21 @@ class TimeEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     hours = db.Column(db.Float, nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=True)  # Optional end date
+    # Keep old date field for backwards compatibility
+    date = db.Column(db.Date, nullable=True)
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    def get_display_date(self):
+        """Get the appropriate date for display"""
+        if self.start_date:
+            if self.end_date and self.end_date != self.start_date:
+                return f"{self.start_date.strftime('%d/%m/%Y')} - {self.end_date.strftime('%d/%m/%Y')}"
+            else:
+                return self.start_date.strftime('%d/%m/%Y')
+        return self.date.strftime('%d/%m/%Y') if self.date else ""
+    
     def __repr__(self):
-        return f'<TimeEntry {self.hours}h on {self.date}>'
+        return f'<TimeEntry {self.hours}h on {self.get_display_date()}>'
