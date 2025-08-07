@@ -285,6 +285,52 @@ def remove_project(project_id):
     
     return redirect(url_for('admin'))
 
+@app.route('/edit_project/<int:project_id>', methods=['GET', 'POST'])
+@login_required
+def edit_project(project_id):
+    """Modifier un projet (admin uniquement)"""
+    if not current_user.is_admin:
+        flash('Accès refusé. Seuls les administrateurs peuvent modifier des projets.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    project = Project.query.get_or_404(project_id)
+    
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '').strip()
+            
+            # Validation
+            if not name:
+                flash('Le nom du projet est obligatoire.', 'error')
+                return render_template('edit_project.html', project=project)
+            
+            # Vérifier l'unicité du nom (sauf pour le projet actuel)
+            existing_project = Project.query.filter(
+                Project.name == name, 
+                Project.id != project_id
+            ).first()
+            if existing_project:
+                flash('Un projet avec ce nom existe déjà.', 'error')
+                return render_template('edit_project.html', project=project)
+            
+            # Mettre à jour le projet
+            project.name = name
+            project.description = description
+            
+            db.session.commit()
+            flash(f'Projet "{name}" modifié avec succès.', 'success')
+            return redirect(url_for('admin'))
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la modification du projet: {str(e)}")
+            flash('Erreur lors de la modification du projet.', 'error')
+            db.session.rollback()
+            return render_template('edit_project.html', project=project)
+    
+    # GET request - afficher le formulaire d'édition
+    return render_template('edit_project.html', project=project)
+
 @app.route('/admin/users')
 @login_required
 def manage_users():
