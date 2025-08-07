@@ -1,0 +1,23 @@
+# Development override for docker-compose.yml
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  web:
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      # Mount source code for live reload
+      - .:/app
+      - /app/__pycache__
+    command: ["uv", "run", "python", "main.py"]
+    ports:
+      - "5000:5000"
+
+  db:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_LOG_STATEMENT=all  # Log all SQL statements for debugging

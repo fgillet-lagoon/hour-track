@@ -4,20 +4,18 @@
 
 Une application Flask de suivi du temps avec authentification basique par nom d'utilisateur/mot de passe. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets et d'utilisateurs. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires.
 
-## Recent Changes (2025-08-06)
+## Recent Changes (2025-08-07)
 
-- **Correction majeure de stabilité**: Résolution des timeouts et erreurs 500 sur la page "Projet et Temps"
-- **Restauration complète des fonctionnalités**: Graphiques Chart.js, filtres de recherche et pagination entièrement opérationnels
-- **Optimisation des performances**: Requêtes de base de données optimisées pour éviter les blocages
-- **Interface graphique complète**: Graphiques en camembert par projet et répartition mensuelle sur 6 mois
-- **Système de recherche avancé**: Filtrage par projet, utilisateur et terme dans les notes avec pagination
-- **Migration d'authentification**: Changement de SAML SSO vers authentification basique login/password
-- **Base de données PostgreSQL**: Migration de JSON vers PostgreSQL avec Flask-SQLAlchemy
-- **Utilisateurs par défaut**: Création automatique de fgillet (admin) et htepa (utilisateur standard)
-- **Interface française**: Toutes les interfaces traduites en français avec branding Lagoon
-- **Gestion CRUD**: Interface complète pour la gestion des utilisateurs (admin uniquement)
-- **Vue personnelle**: Section "Mes Entrées" avec recherche par projet/terme et CRUD complet
-- **Gestion des mots de passe**: Interface pour changer son mot de passe + admin peut changer celui des autres
+- **Modification des projets**: Interface complète d'édition des projets avec validation
+- **Graphiques personnels**: Ajout de graphiques dans "Mes Entrées" filtrés par utilisateur connecté
+- **Filtrage des statistiques**: Graphiques intelligents avec filtrage par utilisateur sélectionné
+- **Dockerisation complète**: Dockerfile, docker-compose.yml avec PostgreSQL et pgAdmin
+- **Documentation complète**: README détaillé avec instructions d'installation et test
+- **Configuration de production**: Variables d'environnement, health checks, et optimisations
+- **Fonctionnalités d'export**: Boutons d'export CSV dans toutes les interfaces
+- **Interface standardisée**: Border-radius cohérent sur tous les éléments UI
+- **Gestion CRUD complète**: Interface pour modification/suppression de projets et utilisateurs
+- **Authentification sécurisée**: Login/password avec hachage Werkzeug
 
 ## User Preferences
 
@@ -78,6 +76,7 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 ### Frontend Libraries
 - **Bootstrap 5**: UI framework with Replit dark theme
 - **Bootstrap Icons**: Icon library for UI components
+- **Chart.js**: Interactive charts for analytics and statistics
 - **Custom CSS**: Lagoon-branded styling with gradient effects
 
 ### Python Libraries
@@ -85,8 +84,12 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **SQLAlchemy**: ORM for database operations
 - **Werkzeug**: Password hashing and security utilities
 - **Gunicorn**: WSGI server for production deployment
+- **python-dateutil**: Precise date calculations for monthly statistics
 
 ### Development Infrastructure
-- **PostgreSQL Database**: Persistent data storage
-- **Environment Variables**: Configuration for database and session secrets
+- **Docker**: Containerization for consistent deployment environments
+- **Docker Compose**: Multi-service orchestration (web app + database)
+- **PostgreSQL Database**: Persistent data storage with health checks
+- **UV Package Manager**: Fast Python dependency management
+- **pgAdmin**: Optional web-based database administration tool
 - **Static Assets**: Logo and custom CSS served via Flask
