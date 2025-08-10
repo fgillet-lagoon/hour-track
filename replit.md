@@ -4,7 +4,17 @@
 
 Une application Flask de suivi du temps avec authentification basique par nom d'utilisateur/mot de passe. L'application permet aux utilisateurs d'enregistrer des heures sur des projets et fournit des capacités administratives pour la gestion de projets et d'utilisateurs. Elle dispose d'un système d'accès basé sur les rôles avec des utilisateurs administrateurs ayant des privilèges supplémentaires.
 
-## Recent Changes (2025-08-07)
+## Recent Changes (2025-08-10)
+
+- **Système de couleurs complet**: Colonne couleur ajoutée aux projets avec migration sécurisée
+- **Palette de couleurs**: 8 couleurs prédéfinies pour les projets avec sélection dans les formulaires
+- **Graphiques colorés**: Couleurs des projets appliquées dans tous les graphiques (circulaires et mensuels)
+- **Badges colorés**: Badges des projets colorés dans toutes les interfaces (/dashboard, /entries, /my_entries)
+- **Cartes colorées**: Bordures gauches colorées sur les cartes de projets de la page d'accueil
+- **Administration colorée**: Couleurs visibles dans les tableaux d'administration et formulaires
+- **Interface cohérente**: Couleurs personnalisées utilisées partout pour distinguer visuellement les projets
+
+## Previous Changes (2025-08-07)
 
 - **Modification des projets**: Interface complète d'édition des projets avec validation
 - **Graphiques personnels**: Ajout de graphiques dans "Mes Entrées" filtrés par utilisateur connecté
@@ -44,8 +54,8 @@ Une application Flask de suivi du temps avec authentification basique par nom d'
 - **Storage Type**: PostgreSQL database
 - **Data Models**: 
   - Users: username, password_hash, is_admin, created_at
-  - Projects: name, description, created_by_id, created_at
-  - TimeEntries: user_id, project_id, hours, date, notes, created_at
+  - Projects: name, description, color, created_by_id, created_at
+  - TimeEntries: user_id, project_id, hours, month, year, notes, created_at
 - **Database Initialization**: Automatic table creation and default data seeding
 - **Relationships**: Proper foreign keys and cascading deletes
 
