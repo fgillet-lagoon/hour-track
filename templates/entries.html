@@ -162,7 +162,7 @@
                                     <span class="badge bg-secondary">{{ entry.user.username }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-lagoon">{{ entry.project.name }}</span>
+                                    <span class="badge" style="background-color: {{ entry.project.color or '#2563EB' }}; color: white;">{{ entry.project.name }}</span>
                                 </td>
                                 <td>
                                     <span class="fw-bold text-success">{{ entry.hours }}h</span>
