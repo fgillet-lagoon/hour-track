@@ -36,7 +36,7 @@
                         <select class="form-select" id="project_id" name="project_id" required>
                             <option value="">Sélectionner un projet</option>
                             {% for project in projects %}
-                                <option value="{{ project.id }}">{{ project.name }}</option>
+                                <option value="{{ project.id }}" data-color="{{ project.color or '#2563EB' }}">{{ project.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -78,9 +78,12 @@
     {% if projects %}
         {% for project in projects %}
         <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card project-card h-100">
+            <div class="card project-card h-100" style="border-left: 4px solid {{ project.color or '#2563EB' }};">
                 <div class="card-body">
-                    <h5 class="card-title">{{ project.name }}</h5>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle me-2" style="width: 12px; height: 12px; background-color: {{ project.color or '#2563EB' }};"></div>
+                        <h5 class="card-title mb-0">{{ project.name }}</h5>
+                    </div>
                     <p class="card-text text-muted small">{{ project.description or 'Aucune description' }}</p>
                     
                     <div class="d-flex justify-content-between align-items-center mt-3">

@@ -240,6 +240,7 @@ def add_project():
     try:
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
+        color = request.form.get('color', '#2563EB')
         
         if not name:
             flash('Le nom du projet est requis.', 'error')
@@ -248,6 +249,7 @@ def add_project():
         project = Project()
         project.name = name
         project.description = description
+        project.color = color
         project.created_by_id = current_user.id
         
         db.session.add(project)
@@ -299,6 +301,7 @@ def edit_project(project_id):
         try:
             name = request.form.get('name', '').strip()
             description = request.form.get('description', '').strip()
+            color = request.form.get('color', project.color or '#2563EB')
             
             # Validation
             if not name:
@@ -317,6 +320,7 @@ def edit_project(project_id):
             # Mettre à jour le projet
             project.name = name
             project.description = description
+            project.color = color
             
             db.session.commit()
             flash(f'Projet "{name}" modifié avec succès.', 'success')
@@ -649,6 +653,19 @@ def my_entries():
             else:
                 user_monthly_data[project_name][month_idx] = 0
     
+    # Préparer les données pour le graphique par projet avec couleurs
+    project_colors = {}
+    for stat in user_project_stats:
+        project = Project.query.filter_by(name=stat.project_name).first()
+        if project:
+            project_colors[stat.project_name] = project.color or '#2563EB'
+    
+    user_project_data = {
+        'projects': [stat.project_name for stat in user_project_stats],
+        'hours': [float(stat.total_hours) for stat in user_project_stats],
+        'colors': [project_colors.get(stat.project_name, '#2563EB') for stat in user_project_stats]
+    }
+    
     return render_template('my_entries.html', 
                          entries=entries, 
                          projects=projects,
@@ -656,6 +673,7 @@ def my_entries():
                          search_term=search_term,
                          pagination=entries_pagination,
                          user_project_stats=user_project_stats,
+                         user_project_data=user_project_data,
                          user_monthly_data=user_monthly_data,
                          user_monthly_labels=user_monthly_labels)
 

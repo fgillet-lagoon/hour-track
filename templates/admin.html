@@ -69,15 +69,33 @@
             <div class="card-body">
                 <!-- Add Project Form -->
                 <form method="POST" action="{{ url_for('add_project') }}" class="row g-3 mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="name" class="form-label">Nom du projet</label>
                         <input type="text" class="form-control" id="name" name="name" 
                                placeholder="Nom du projet" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="description" name="description" 
                                placeholder="Description du projet">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="color" class="form-label">Couleur</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="color" class="form-control form-control-color" id="color" name="color" 
+                                   value="#2563EB" style="width: 60px; height: 38px;">
+                            <select class="form-select" id="colorPreset" onchange="setColorFromPreset()">
+                                <option value="">Couleurs prédéfinies</option>
+                                <option value="#2563EB">Bleu Lagoon</option>
+                                <option value="#EA580C">Orange Lagoon</option>
+                                <option value="#059669">Vert</option>
+                                <option value="#DC2626">Rouge</option>
+                                <option value="#7C3AED">Violet</option>
+                                <option value="#D97706">Ambre</option>
+                                <option value="#0891B2">Cyan</option>
+                                <option value="#BE123C">Rose</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-lagoon w-100">
@@ -93,6 +111,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Nom</th>
+                                <th>Couleur</th>
                                 <th>Description</th>
                                 <th>Créé par</th>
                                 <th>Date création</th>
@@ -102,7 +121,15 @@
                         <tbody>
                             {% for project in projects %}
                             <tr>
-                                <td><strong>{{ project.name }}</strong></td>
+                                <td>
+                                    <strong>{{ project.name }}</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle" style="width: 20px; height: 20px; background-color: {{ project.color or '#2563EB' }};"></div>
+                                        <small class="text-muted">{{ project.color or '#2563EB' }}</small>
+                                    </div>
+                                </td>
                                 <td><span class="text-muted">{{ project.description or 'Aucune description' }}</span></td>
                                 <td>
                                     <span class="badge bg-secondary">{{ project.creator.username }}</span>
@@ -175,7 +202,9 @@
                                         <span class="badge bg-lagoon ms-1">Admin</span>
                                     {% endif %}
                                 </td>
-                                <td><strong>{{ entry.project.name }}</strong></td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ entry.project.color or '#2563EB' }}; color: white;">{{ entry.project.name }}</span>
+                                </td>
                                 <td>{{ entry.get_display_date() }}</td>
                                 <td><span class="text-primary fw-bold">{{ entry.hours }}h</span></td>
                                 <td><span class="text-muted">{{ entry.notes or '-' }}</span></td>
@@ -196,4 +225,16 @@
         </div>
     </div>
 </div>
+
+<script>
+// Fonction pour définir la couleur depuis les presets
+function setColorFromPreset() {
+    const preset = document.getElementById('colorPreset');
+    const colorInput = document.getElementById('color');
+    
+    if (preset.value && colorInput) {
+        colorInput.value = preset.value;
+    }
+}
+</script>
 {% endblock %}

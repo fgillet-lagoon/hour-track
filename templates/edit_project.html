@@ -44,6 +44,31 @@
                         </div>
                         
                         <div class="col-12">
+                            <label for="color" class="form-label">Couleur du projet</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" class="form-control form-control-color" id="color" name="color" 
+                                       value="{{ project.color or '#2563EB' }}" style="width: 80px; height: 50px;">
+                                <select class="form-select" id="colorPreset" onchange="setColorFromPreset()" style="max-width: 200px;">
+                                    <option value="">Couleurs prédéfinies</option>
+                                    <option value="#2563EB" {% if project.color == '#2563EB' %}selected{% endif %}>Bleu Lagoon</option>
+                                    <option value="#EA580C" {% if project.color == '#EA580C' %}selected{% endif %}>Orange Lagoon</option>
+                                    <option value="#059669" {% if project.color == '#059669' %}selected{% endif %}>Vert</option>
+                                    <option value="#DC2626" {% if project.color == '#DC2626' %}selected{% endif %}>Rouge</option>
+                                    <option value="#7C3AED" {% if project.color == '#7C3AED' %}selected{% endif %}>Violet</option>
+                                    <option value="#D97706" {% if project.color == '#D97706' %}selected{% endif %}>Ambre</option>
+                                    <option value="#0891B2" {% if project.color == '#0891B2' %}selected{% endif %}>Cyan</option>
+                                    <option value="#BE123C" {% if project.color == '#BE123C' %}selected{% endif %}>Rose</option>
+                                </select>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted">Aperçu:</span>
+                                    <div class="rounded-circle border" id="colorPreview" 
+                                         style="width: 30px; height: 30px; background-color: {{ project.color or '#2563EB' }};"></div>
+                                </div>
+                            </div>
+                            <div class="form-text">Choisissez une couleur pour identifier facilement le projet dans les graphiques et listes</div>
+                        </div>
+                        
+                        <div class="col-12">
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-lagoon">
                                     <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
@@ -133,6 +158,28 @@ document.addEventListener('DOMContentLoaded', function() {
         descriptionTextarea.addEventListener('input', updateCounter);
         updateCounter(); // Initial call
     }
+    
+    // Mise à jour de l'aperçu de couleur
+    const colorInput = document.getElementById('color');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (colorInput && colorPreview) {
+        colorInput.addEventListener('input', function() {
+            colorPreview.style.backgroundColor = this.value;
+        });
+    }
 });
+
+// Fonction pour définir la couleur depuis les presets
+function setColorFromPreset() {
+    const preset = document.getElementById('colorPreset');
+    const colorInput = document.getElementById('color');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    if (preset.value && colorInput && colorPreview) {
+        colorInput.value = preset.value;
+        colorPreview.style.backgroundColor = preset.value;
+    }
+}
 </script>
 {% endblock %}
