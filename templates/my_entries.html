@@ -338,23 +338,18 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.value = today;
     }
     
-    // Données pour les graphiques personnels
-    var userProjectLabels = {{ user_project_stats | map(attribute='project_name') | list | tojson }};
-    var userProjectData = {{ user_project_stats | map(attribute='total_hours') | list | tojson }};
+    // Données pour les graphiques personnels avec couleurs
+    var userProjectData = {{ user_project_data | tojson if user_project_data else '{"projects": [], "hours": [], "colors": []}' | safe }};
     var userMonthlyLabels = {{ user_monthly_labels | tojson }};
     var userMonthlyData = {{ user_monthly_data | tojson }};
 
-    // Palette de couleurs
-    var colorPalette = [
-        'rgba(37, 99, 235, 0.8)',
-        'rgba(234, 88, 12, 0.8)', 
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(168, 85, 247, 0.8)',
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(236, 72, 153, 0.8)',
-        'rgba(14, 165, 233, 0.8)'
-    ];
+    // Utiliser les couleurs des projets ou une palette par défaut
+    var projectColors = userProjectData.colors && userProjectData.colors.length > 0 
+        ? userProjectData.colors 
+        : [
+            '#2563EB', '#EA580C', '#059669', '#DC2626',
+            '#7C3AED', '#D97706', '#0891B2', '#BE123C'
+        ];
 
     // Graphique en camembert pour mes heures par projet
     if (document.getElementById('myHoursChart')) {
@@ -362,10 +357,10 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(myHoursCtx, {
             type: 'doughnut',
             data: {
-                labels: userProjectLabels,
+                labels: userProjectData.projects || [],
                 datasets: [{
-                    data: userProjectData,
-                    backgroundColor: colorPalette.slice(0, userProjectLabels.length),
+                    data: userProjectData.hours || [],
+                    backgroundColor: projectColors,
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
@@ -401,13 +396,19 @@ document.addEventListener('DOMContentLoaded', function() {
         var myMonthlyCtx = document.getElementById('myMonthlyChart').getContext('2d');
         var monthlyDatasets = [];
 
-        // Créer un dataset pour chaque projet
+        // Créer un dataset pour chaque projet avec les bonnes couleurs
         var projectIndex = 0;
         for (var projectName in userMonthlyData) {
+            // Trouver la couleur correspondante au projet
+            var projectColorIndex = userProjectData.projects ? userProjectData.projects.indexOf(projectName) : -1;
+            var projectColor = projectColorIndex >= 0 && projectColors[projectColorIndex] 
+                ? projectColors[projectColorIndex] 
+                : projectColors[projectIndex % projectColors.length];
+            
             monthlyDatasets.push({
                 label: projectName,
                 data: userMonthlyData[projectName],
-                backgroundColor: colorPalette[projectIndex % colorPalette.length],
+                backgroundColor: projectColor,
                 borderWidth: 1,
                 borderColor: '#fff'
             });

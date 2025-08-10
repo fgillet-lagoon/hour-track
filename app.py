@@ -1088,10 +1088,24 @@ def view_entries():
         # Utiliser la vraie pagination
         pagination = entries_pagination
         
+        # Préparer les couleurs des projets pour les graphiques
+        project_colors = {}
+        for stat in project_stats:
+            project = Project.query.filter_by(name=stat.project_name).first()
+            if project:
+                project_colors[stat.project_name] = project.color or '#2563EB'
+        
+        chart_data = {
+            'projects': [stat.project_name for stat in project_stats],
+            'hours': [float(stat.total_hours) for stat in project_stats],
+            'colors': [project_colors.get(stat.project_name, '#2563EB') for stat in project_stats]
+        }
+        
         logger.info("Avant render_template")
         
         return render_template('entries.html', 
-                             project_stats=project_stats, 
+                             project_stats=project_stats,
+                             chart_data=chart_data,
                              all_entries=time_entries,
                              projects_monthly_data=projects_monthly_data,
                              monthly_labels=monthly_labels,

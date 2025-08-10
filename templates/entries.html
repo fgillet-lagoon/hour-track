@@ -361,7 +361,11 @@ canvas {
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const colors = ['#2563EB', '#EA580C', '#DC2626', '#059669', '#7C3AED', '#DB2777', '#0891B2', '#CA8A04'];
+    // Données des projets avec couleurs 
+    const chartData = {{ chart_data | tojson if chart_data else '{"projects": [], "hours": [], "colors": []}' | safe }};
+    const projectColors = chartData.colors && chartData.colors.length > 0 
+        ? chartData.colors 
+        : ['#2563EB', '#EA580C', '#DC2626', '#059669', '#7C3AED', '#DB2777', '#0891B2', '#CA8A04'];
     
     // Configuration globale pour empêcher les interactions problématiques sur mobile
     Chart.defaults.interaction.mode = 'nearest';
@@ -400,8 +404,8 @@ canvas {
     const ctx = document.getElementById('hoursChart').getContext('2d');
     
     {% if project_stats %}
-    const projectLabels = [{% for stat in project_stats %}'{{ stat.project_name }}'{% if not loop.last %}, {% endif %}{% endfor %}];
-    const projectHours = [{% for stat in project_stats %}{{ stat.total_hours }}{% if not loop.last %}, {% endif %}{% endfor %}];
+    const projectLabels = chartData.projects || [];
+    const projectHours = chartData.hours || [];
     
     const hoursChart = new Chart(ctx, {
         type: 'doughnut',
@@ -409,7 +413,7 @@ canvas {
             labels: projectLabels,
             datasets: [{
                 data: projectHours,
-                backgroundColor: colors.slice(0, projectLabels.length),
+                backgroundColor: projectColors,
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
@@ -463,11 +467,17 @@ canvas {
     const datasets = [];
     let colorIndex = 0;
     for (const project in projectsData) {
+        // Trouver la couleur correspondante au projet
+        const projectColorIndex = chartData.projects ? chartData.projects.indexOf(project) : -1;
+        const projectColor = projectColorIndex >= 0 && projectColors[projectColorIndex] 
+            ? projectColors[projectColorIndex] 
+            : projectColors[colorIndex % projectColors.length];
+        
         datasets.push({
             label: project,
             data: projectsData[project],
-            backgroundColor: colors[colorIndex % colors.length],
-            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: projectColor,
+            borderColor: projectColor,
             borderWidth: 1
         });
         colorIndex++;
