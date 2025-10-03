@@ -1,7 +1,9 @@
 import os
 import logging
+import uuid
+import msal
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -24,6 +26,15 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     'pool_pre_ping': True,
     "pool_recycle": 300,
 }
+
+# Azure AD configuration
+AZURE_CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
+AZURE_CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
+AZURE_TENANT_ID = os.environ.get("AZURE_TENANT_ID", "common")
+AZURE_AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}"
+AZURE_REDIRECT_URI = os.environ.get("AZURE_REDIRECT_URI", "https://flask-website.replit.app/login/azure/callback")
+AZURE_SCOPE = ["User.Read"]  # Minimal permissions - only read user profile
+ALLOWED_DOMAIN = "offratel.net"
 
 # Initialize extensions
 db.init_app(app)
