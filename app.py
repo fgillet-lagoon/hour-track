@@ -138,6 +138,126 @@ def logout():
     flash('Vous avez été déconnecté.', 'info')
     return redirect(url_for('login'))
 
+@app.route('/login/azure')
+def login_azure():
+    """Initiate Azure AD login"""
+    if not AZURE_CLIENT_ID or not AZURE_CLIENT_SECRET:
+        flash('L\'authentification Azure n\'est pas configurée. Veuillez contacter l\'administrateur.', 'error')
+        return redirect(url_for('login'))
+    
+    # Create a unique state token for CSRF protection
+    session['state'] = str(uuid.uuid4())
+    
+    # Build the MSAL confidential client
+    msal_app = msal.ConfidentialClientApplication(
+        AZURE_CLIENT_ID,
+        authority=AZURE_AUTHORITY,
+        client_credential=AZURE_CLIENT_SECRET
+    )
+    
+    # Get the authorization URL
+    auth_url = msal_app.get_authorization_request_url(
+        AZURE_SCOPE,
+        state=session['state'],
+        redirect_uri=AZURE_REDIRECT_URI
+    )
+    
+    logger.info("Redirecting to Azure AD login")
+    return redirect(auth_url)
+
+@app.route('/login/azure/callback')
+def login_azure_callback():
+    """Handle Azure AD callback"""
+    if not AZURE_CLIENT_ID or not AZURE_CLIENT_SECRET:
+        flash('L\'authentification Azure n\'est pas configurée.', 'error')
+        return redirect(url_for('login'))
+    
+    # Verify state to prevent CSRF
+    if request.args.get('state') != session.get('state'):
+        flash('Erreur de sécurité. Veuillez réessayer.', 'error')
+        return redirect(url_for('login'))
+    
+    # Check for errors from Azure
+    if 'error' in request.args:
+        error_description = request.args.get('error_description', 'Unknown error')
+        flash(f'Erreur d\'authentification Azure: {error_description}', 'error')
+        return redirect(url_for('login'))
+    
+    # Get the authorization code
+    code = request.args.get('code')
+    if not code:
+        flash('Code d\'autorisation manquant.', 'error')
+        return redirect(url_for('login'))
+    
+    # Build the MSAL confidential client
+    msal_app = msal.ConfidentialClientApplication(
+        AZURE_CLIENT_ID,
+        authority=AZURE_AUTHORITY,
+        client_credential=AZURE_CLIENT_SECRET
+    )
+    
+    # Exchange the code for a token
+    result = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=AZURE_SCOPE,
+        redirect_uri=AZURE_REDIRECT_URI
+    )
+    
+    if 'error' in result:
+        flash(f'Erreur lors de l\'obtention du token: {result.get("error_description", "Unknown error")}', 'error')
+        return redirect(url_for('login'))
+    
+    # Get user info from the token
+    user_info = result.get('id_token_claims', {})
+    email = user_info.get('preferred_username') or user_info.get('email')
+    name = user_info.get('name', '')
+    
+    if not email:
+        flash('Impossible de récupérer l\'adresse email.', 'error')
+        return redirect(url_for('login'))
+    
+    # Validate domain restriction
+    email_domain = email.split('@')[-1].lower()
+    if email_domain != ALLOWED_DOMAIN:
+        flash(f'Accès refusé. Seuls les utilisateurs @{ALLOWED_DOMAIN} sont autorisés.', 'error')
+        logger.warning(f"Azure login attempt rejected for domain: {email_domain}")
+        return redirect(url_for('login'))
+    
+    # Extract username from email (part before @)
+    username = email.split('@')[0]
+    
+    # Check if user exists, if not create one
+    user = User.query.filter_by(username=username).first()
+    
+    if not user:
+        # Create new user from Azure AD
+        user = User()
+        user.username = username
+        # Set a random password hash (they will use Azure AD to login)
+        user.set_password(str(uuid.uuid4()))
+        user.is_admin = False  # New Azure users are not admin by default
+        
+        db.session.add(user)
+        try:
+            db.session.commit()
+            logger.info(f"New Azure AD user created: {username}")
+            flash(f'Bienvenue {name} ! Votre compte a été créé.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating Azure AD user: {str(e)}")
+            flash('Erreur lors de la création du compte.', 'error')
+            return redirect(url_for('login'))
+    else:
+        logger.info(f"Existing user logged in via Azure AD: {username}")
+        flash(f'Bienvenue, {name} !', 'success')
+    
+    # Log the user in
+    login_user(user)
+    
+    # Redirect to dashboard
+    next_page = request.args.get('next')
+    return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
